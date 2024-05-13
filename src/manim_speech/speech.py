@@ -9,8 +9,6 @@ import manim
 from scipy import interpolate
 import pydantic
 
-import rich
-
 
 class SpeechData(pydantic.BaseModel):
     text: str
@@ -35,15 +33,13 @@ def get_bookmark_times(text: str, tts_data: services.base.TTSData, stt_data: ser
 
     bookmark_dist: dict[str, int] = {}
     content: str = ""
-    for part in re.split(r"(<bookmark\s*mark\s*=['\"](\w*)[\"']\s*/>)", text):
-        match = re.match(r"<bookmark\s*mark\s*=['\"](\w*)[\"']\s*/>", part)
+    for part in re.split(r"(<bookmark\s*mark\s*=[\'\"]\w*[\"\']\s*/>)", text):
+        match = re.match(r"<bookmark\s*mark\s*=[\'\"](.*)[\"\']\s*/>", part)
         if not isinstance(match, type(None)):
             bookmark_dist[match.group(1)] = len(content)
         else:
             content += part
-    
-    rich.print(bookmark_dist)
-    
+        
     bookmark_times: dict[str, float] = {}
     for mark, dist in bookmark_dist.items():
         bookmark_times[mark] = interpolator(dist * transcribed_text_len / text_len)
@@ -60,7 +56,7 @@ def save_cache(cache_dir: pathlib.Path, data: list[SpeechData]) -> None:
     if not cache_dir.exists():
         cache_dir.mkdir(parents=True)
     with (cache_dir / "cache.json").open("w") as f:
-        f.write(pydantic.TypeAdapter(list[SpeechData]).dump_json(data).decode("utf-8"))
+        f.write(pydantic.TypeAdapter(list[SpeechData]).dump_json(data, indent=4).decode("utf-8"))
 
 
 def create(
