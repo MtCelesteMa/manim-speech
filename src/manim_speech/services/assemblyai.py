@@ -48,7 +48,8 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
             speech_model=aai.SpeechModel.best if model == "best" else aai.SpeechModel.nano,
             language_code=language,
             word_boost=self.word_boost,
-            custom_spelling=self.custom_spelling
+            custom_spelling=self.custom_spelling,
+            punctuate=False
         )
 
     def stt(self, input: base.STTInput) -> base.STTData:
