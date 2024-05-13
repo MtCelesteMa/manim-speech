@@ -8,13 +8,15 @@ import re
 import manim
 from scipy import interpolate
 import pydantic
+from mutagen.mp3 import MP3
 
 
 class SpeechData(pydantic.BaseModel):
     text: str
     tts_data: services.base.TTSData
     stt_data: services.base.STTData
-    bookmark_times: dict[str, float] = pydantic.Field(default_factory=list)
+    duration: float
+    bookmark_times: dict[str, float]
 
 
 def remove_bookmarks(s: str) -> str:
@@ -91,6 +93,7 @@ def create(
         text=text,
         tts_data=tts_data,
         stt_data=stt_data,
+        duration=MP3(cache_dir / tts_data.output.audio_path).info.length,
         bookmark_times=bookmark_times,
     )
     cache.append(data)
