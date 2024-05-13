@@ -37,5 +37,12 @@ class DeepLTranslationService(base.TranslationService, DeepLService):
             service_type=self.service_type,
             config={}
         )
+        if input.target_language == "zh_tw":
+            try:
+                import opencc
+            except ImportError:
+                raise ImportError("Please install opencc with `pip install opencc`")
+            result = self.client.translate_text(input.text, source_lang=input.source_language, target_lang="zh", tag_handling="xml")
+            return base.TranslationData(info=info, input=input, output=base.TranslationOutput(translated_text=opencc.OpenCC("s2t.json").convert(result.text)))
         result = self.client.translate_text(input.text, source_lang=input.source_language, target_lang=input.target_language, tag_handling="xml")
         return base.TranslationData(info=info, input=input, output=base.TranslationOutput(translated_text=result.text))
