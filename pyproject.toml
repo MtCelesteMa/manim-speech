@@ -28,6 +28,7 @@ classifiers = [
 
 [project.optional-dependencies]
 openai = ["openai"]
+assemblyai = ["assemblyai"]
 
 [project.urls]
 Homepage = "https://github.com/MtCelesteMa/manim-speech"
