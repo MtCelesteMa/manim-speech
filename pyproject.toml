@@ -26,6 +26,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12"
 ]
 
+[project.optional-dependencies]
+openai = ["openai"]
+
 [project.urls]
 Homepage = "https://github.com/MtCelesteMa/manim-speech"
 "Bug Tracker" = "https://github.com/MtCelesteMa/manim-speech/issues"
