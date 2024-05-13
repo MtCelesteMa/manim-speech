@@ -81,7 +81,9 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
                     text_offset=text_offset
                 )
             )
-            text_offset += len(word.text) + 1
+            if text_offset != 0 and response.text[text_offset] == " ":
+                text_offset += 1
+            text_offset += len(word.text)
     
         return base.STTData(
             info=info,

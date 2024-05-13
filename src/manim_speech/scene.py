@@ -55,7 +55,7 @@ class VoiceoverScene(manim.Scene):
 
 class TranslationScene(manim.Scene):
     translation_service: services.base.TranslationService
-    _ = gettext.gettext
+    _ = staticmethod(gettext.gettext)
 
     def set_translation_service(self, service: services.base.TranslationService) -> None:
         self.translation_service = service

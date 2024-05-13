@@ -52,7 +52,9 @@ class WhisperSTTService(base.STTService, WhisperService):
                         text_offset=text_offset
                     )
                 )
-                text_offset += len(word["word"]) + 1
+                if text_offset != 0 and response.text[text_offset] == " ":
+                    text_offset += 1
+                text_offset += len(word["word"])
         
         return base.STTData(info=info, input=input, output=base.STTOutput(text=transcript["text"], word_boundaries=word_boundaries))
 
