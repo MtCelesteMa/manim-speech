@@ -20,11 +20,12 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 
 ### Services
 
-| Service Name | Optional Dependencies | Is Local | Text-To-Speech | Speech-To-Text | Translation |
-|--------------|-----------------------|----------|----------------|----------------|-------------|
-| OpenAI       | `openai`              | No       | Yes            | Yes            | No          |
-| AssemblyAI   | `assemblyai`          | No       | No             | Yes            | No          |
-| DeepL        | `deepl`               | No       | No             | No             | Yes         |
+| Service Name | Optional Dependency Set | Is Local | Text-To-Speech | Speech-To-Text | Translation |
+|--------------|-------------------------|----------|----------------|----------------|-------------|
+| OpenAI       | `openai`                | No       | Yes            | Yes            | No          |
+| Whisper      | `whisper`               | Yes      | No             | Yes            | No          |
+| AssemblyAI   | `assemblyai`            | No       | No             | Yes            | No          |
+| DeepL        | `deepl`                 | No       | No             | No             | Yes         |
 
 **Note:** Translating to Traditional Chinese (`zh_tw`) using the DeepL service requires the `chinese` optional dependency set to be installed.
 

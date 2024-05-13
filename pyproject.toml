@@ -29,6 +29,7 @@ classifiers = [
 
 [project.optional-dependencies]
 openai = ["openai"]
+whisper = ["openai-whisper"]
 assemblyai = ["assemblyai"]
 deepl = ["deepl"]
 chinese = ["opencc"]

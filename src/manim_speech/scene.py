@@ -60,7 +60,7 @@ class TranslationScene(manim.Scene):
     def set_translation_service(self, service: services.base.TranslationService) -> None:
         self.translation_service = service
     
-    def translate(self, file: pathlib.Path | str, domain: str, source_language: str, target_language: str,) -> str:
+    def translate(self, file: pathlib.Path | str, domain: str, source_language: str, target_language: str,) -> None:
         if not hasattr(self, "translation_service"):
             raise AttributeError("Translation service not set")
         translation.init_translation_env(file, domain)
