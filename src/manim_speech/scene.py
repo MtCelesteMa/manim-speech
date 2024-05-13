@@ -2,10 +2,12 @@
 
 from . import services
 from . import speech
+from . import translation
 
 from collections import abc
 import contextlib
 import pathlib
+import gettext
 
 import manim
 
@@ -49,3 +51,19 @@ class VoiceoverScene(manim.Scene):
             self.wait_for_voiceover()
             self.current_speech_data = None
             self.current_speech_start_time = None
+
+
+class TranslationScene(manim.Scene):
+    translation_service: services.base.TranslationService
+    _ = gettext.gettext
+
+    def set_translation_service(self, service: services.base.TranslationService) -> None:
+        self.translation_service = service
+    
+    def translate(self, file: pathlib.Path | str, domain: str, source_language: str, target_language: str,) -> str:
+        if not hasattr(self, "translation_service"):
+            raise AttributeError("Translation service not set")
+        translation.init_translation_env(file, domain)
+        translation.translate_po_file(domain, source_language, target_language, service=self.translation_service)
+        trans = gettext.translation(domain, languages=[target_language], localedir="locales")
+        self._ = trans.gettext

@@ -97,3 +97,29 @@ class STTService(Service, ABC):
     @abstractmethod
     def stt(self, input: STTInput) -> STTData:
         raise NotImplementedError
+
+
+class TranslationInput(pydantic.BaseModel):
+    text: str
+    source_language: str
+    target_language: str
+
+
+class TranslationOutput(pydantic.BaseModel):
+    translated_text: str
+
+
+class TranslationData(pydantic.BaseModel):
+    info: ServiceInfo
+    input: TranslationInput
+    output: TranslationOutput
+
+
+class TranslationService(Service, ABC):
+    @property
+    def service_type(self) -> str:
+        return "Translation"
+    
+    @abstractmethod
+    def translate(self, input: TranslationInput) -> TranslationData:
+        raise NotImplementedError

@@ -2,4 +2,5 @@
 
 from . import services
 from . import speech
-from .scene import SceneWithSpeech
+from . import translation
+from .scene import VoiceoverScene, TranslationScene
