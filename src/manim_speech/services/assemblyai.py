@@ -31,7 +31,7 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
     def __init__(
             self,
             model: typing.Literal["best", "nano"] = "best",
-            language: str = "en_us",
+            language: str | None = None,
             word_boost: list[str] | None = None,
             custom_spelling: dict[str, str | list[str]] | None = None,
             *,
@@ -46,7 +46,8 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
 
         self.config = aai.TranscriptionConfig(
             speech_model=aai.SpeechModel.best if model == "best" else aai.SpeechModel.nano,
-            language_code=language,
+            language_code=language if isinstance(language, str) else None,
+            language_detection=isinstance(language, type(None)),
             word_boost=self.word_boost,
             custom_spelling=self.custom_spelling,
             punctuate=False
