@@ -21,10 +21,13 @@ def translate_po_file(domain: str, src_lang: str, target_lang: str, *, service: 
     target_path = pathlib.Path("locales") / target_lang / "LC_MESSAGES" / f"{domain}"
     if not target_path.parent.exists():
         target_path.parent.mkdir(parents=True)
-    pofile = polib.pofile(str(src_path))
-    pofile.metadata["Content-Type"] = "text/plain; charset=UTF-8"
-    for entry in pofile.untranslated_entries():
-        translation = service.translate(services.base.TranslationInput(text=entry.msgid, source_language=src_lang, target_language=target_lang)).output.translated_text
-        entry.msgstr = translation
-    pofile.save(str(target_path.with_suffix(".po")))
+    if not target_path.with_suffix(".po").exists():
+        pofile = polib.pofile(str(src_path))
+        pofile.metadata["Content-Type"] = "text/plain; charset=UTF-8"
+        for entry in pofile.untranslated_entries():
+            translation = service.translate(services.base.TranslationInput(text=entry.msgid, source_language=src_lang, target_language=target_lang)).output.translated_text
+            entry.msgstr = translation
+        pofile.save(str(target_path.with_suffix(".po")))
+    else:
+        pofile = polib.pofile(str(target_path.with_suffix(".po")))
     pofile.save_as_mofile(str(target_path.with_suffix(".mo")))
