@@ -22,6 +22,7 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 
 | Service Name | Optional Dependency Set | Is Local | Text-To-Speech | Speech-To-Text | Translation |
 |--------------|-------------------------|----------|----------------|----------------|-------------|
+| ElevenLabs   | `elevenlabs`            | No       | Yes            | No             | No          |
 | OpenAI       | `openai`                | No       | Yes            | Yes            | No          |
 | Whisper      | `whisper`               | Yes      | No             | Yes            | No          |
 | AssemblyAI   | `assemblyai`            | No       | No             | Yes            | No          |

@@ -28,6 +28,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+elevenlabs = ["elevenlabs"]
 openai = ["openai"]
 whisper = ["openai-whisper"]
 assemblyai = ["assemblyai"]
