@@ -113,3 +113,32 @@ class OpenAISTTService(base.STTService, OpenAIService):
             text_offset += len(word["word"])
         
         return base.STTData(info=info, input=input, output=base.STTOutput(text=response.text, word_boundaries=word_boundaries))
+
+
+class OpenAITranslationService(base.TranslationService, OpenAIService):
+    def __init__(self, model: str = "gpt-4o", *, cache_dir: pathlib.Path | str | None = None, api_key: str | None = None) -> None:
+        super().__init__(cache_dir=cache_dir, api_key=api_key)
+        self.model = model
+        self.client = openai.OpenAI(api_key=self.api_key)
+        self.system_message = """Translate the given text from {source_language} to {target_language}. Do not output anything other than the translated text.
+        If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text."""
+    
+    def translate(self, input: base.TranslationInput) -> base.TranslationData:
+        info = base.ServiceInfo(
+            service_name=self.service_name,
+            service_type=self.service_type,
+            config={
+                "model": self.model
+            }
+        )
+        result = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": self.system_message.format(source_language=input.source_language, target_language=input.target_language)},
+                {"role": "user", "content": input.text}
+            ],
+            max_tokens=4095
+        ).choices[0].message.content
+        if not isinstance(result, str):
+            raise ValueError(f"Unexpected response: {result}")
+        return base.TranslationData(info=info, input=input, output=base.TranslationOutput(translated_text=result))
