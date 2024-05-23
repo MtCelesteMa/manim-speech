@@ -61,9 +61,10 @@ class TranslationScene(manim.Scene):
         self.translation_service = service
     
     def translate(self, file: pathlib.Path | str, domain: str, source_language: str, target_language: str,) -> None:
-        if not hasattr(self, "translation_service"):
-            raise AttributeError("Translation service not set")
         translation.init_translation_env(file, domain)
-        translation.translate_po_file(domain, source_language, target_language, service=self.translation_service)
+        if hasattr(self, "translation_service"):
+            translation.translate_po_file(domain, source_language, target_language, service=self.translation_service)
+        else:
+            translation.translate_po_file(domain, source_language, target_language)
         trans = gettext.translation(domain, languages=[target_language], localedir="locales")
         self._ = trans.gettext
