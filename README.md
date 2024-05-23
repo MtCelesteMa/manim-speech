@@ -28,7 +28,11 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 | AssemblyAI   | `assemblyai`            | No       | No             | Yes            | No          |
 | DeepL        | `deepl`                 | No       | No             | No             | Yes         |
 
-**Note:** Translating to Traditional Chinese (`zh_tw`) using the DeepL service requires the `chinese` optional dependency set to be installed.
+#### Notes on Chinese Translations
+
+**OpenAI Translator:** Please specify Traditional (`zh_tw`) or Simplified (`zh_cn`) when using the OpenAI translator. Only specifying `zh` has no guarantee on the script used, although tests have indicated that GPT-4o strongly prefers Simplified Chinese in such cases.
+
+**DeepL Translator:** The DeepL translator does not natively support translating to Traditional Chinese, so translating to Traditional Chinese requires the `chinese` optional dependency set to be installed. Only specifying `zh` has the same effect as specifying `zh_cn`.
 
 ## Usage Examples
 
