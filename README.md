@@ -8,7 +8,7 @@ Special thanks to [osolmaz](https://github.com/osolmaz) and others who worked on
 
 Manim Speech can be installed via pip using the following command:
 ```shell
-pip install "manim_speech[*optional_dependency_sets*] @ git+https://github.com/MtCelesteMa/manim-speech.git"
+pip install "manim_speech[*optional_dependency_sets*]"
 ```
 
 Where `*optional_dependency_sets*` is a list of optional dependency sets for Manim Speech.
@@ -22,8 +22,8 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 
 | Service Name | Optional Dependency Set | Is Local | Text-To-Speech | Speech-To-Text | Translation |
 |--------------|-------------------------|----------|----------------|----------------|-------------|
-| ElevenLabs   | `elevenlabs`            | No       | Yes            | No             | No          |
 | OpenAI       | `openai`                | No       | Yes            | Yes            | No          |
+| ElevenLabs   | `elevenlabs`            | No       | Yes            | No             | No          |
 | Whisper      | `whisper`               | Yes      | No             | Yes            | No          |
 | AssemblyAI   | `assemblyai`            | No       | No             | Yes            | No          |
 | DeepL        | `deepl`                 | No       | No             | No             | Yes         |

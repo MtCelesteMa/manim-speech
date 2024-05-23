@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "manim_speech"
-version = "0.1.0-dev"
+version = "0.1.0"
 dependencies = [
     "manim",
     "pydantic",
@@ -20,7 +20,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["manim", "speech", "voiceover", "tts"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Topic :: Multimedia :: Sound/Audio :: Speech",
     "License :: OSI Approved :: Apache Software License",
@@ -28,8 +28,8 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-elevenlabs = ["elevenlabs"]
 openai = ["openai"]
+elevenlabs = ["elevenlabs"]
 whisper = ["openai-whisper"]
 assemblyai = ["assemblyai"]
 deepl = ["deepl"]
