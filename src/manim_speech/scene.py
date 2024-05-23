@@ -39,7 +39,7 @@ class VoiceoverScene(manim.Scene):
     @contextlib.contextmanager
     def voiceover(self, text: str) -> abc.Generator[speech.SpeechData, None, None]:
         if not isinstance(self.stt_service, services.base.STTService):
-            raise AttributeError("STT service not set")
+            manim.logger.warning("No STT service is set. Bookmark locations will be inaccurate.")
         try:
             self.current_speech_data = speech.create(text, self.tts_service, self.stt_service)
             self.current_speech_start_time = self.renderer.time

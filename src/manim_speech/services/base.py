@@ -45,7 +45,7 @@ class TTSOutput(pydantic.BaseModel):
 
 
 class TTSData(pydantic.BaseModel):
-    info: ServiceInfo
+    info: ServiceInfo | None
     input: TTSInput
     output: TTSOutput
 
@@ -64,15 +64,15 @@ class TTSService(Service, ABC):
         raise NotImplementedError
 
 
-class WordBoundary(pydantic.BaseModel):
-    word: str
+class Boundary(pydantic.BaseModel):
+    text: str
     start: float
     end: float
     text_offset: int
 
     @property
-    def word_length(self) -> int:
-        return len(self.word)
+    def length(self) -> int:
+        return len(self.text)
 
 
 class STTInput(pydantic.BaseModel):
@@ -81,11 +81,11 @@ class STTInput(pydantic.BaseModel):
 
 class STTOutput(pydantic.BaseModel):
     text: str
-    word_boundaries: list[WordBoundary]
+    boundaries: list[Boundary]
 
 
 class STTData(pydantic.BaseModel):
-    info: ServiceInfo
+    info: ServiceInfo | None
     input: STTInput
     output: STTOutput
 
@@ -111,7 +111,7 @@ class TranslationOutput(pydantic.BaseModel):
 
 
 class TranslationData(pydantic.BaseModel):
-    info: ServiceInfo
+    info: ServiceInfo | None
     input: TranslationInput
     output: TranslationOutput
 

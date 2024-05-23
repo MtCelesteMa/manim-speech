@@ -40,13 +40,13 @@ class WhisperSTTService(base.STTService, WhisperService):
 
         transcript = self.model_obj.transcribe(str(self.cache_dir / input.audio_path), word_timestamps=True)
 
-        word_boundaries: list[base.WordBoundary] = []
+        word_boundaries: list[base.Boundary] = []
         text_offset = 0
         for segment in transcript["segments"]:
             for word in segment["words"]:
                 word_boundaries.append(
-                    base.WordBoundary(
-                        word=word["word"],
+                    base.Boundary(
+                        text=word["word"],
                         start=word["start"],
                         end=word["end"],
                         text_offset=text_offset
@@ -56,5 +56,5 @@ class WhisperSTTService(base.STTService, WhisperService):
                     text_offset += 1
                 text_offset += len(word["word"])
         
-        return base.STTData(info=info, input=input, output=base.STTOutput(text=transcript["text"], word_boundaries=word_boundaries))
+        return base.STTData(info=info, input=input, output=base.STTOutput(text=transcript["text"], boundaries=word_boundaries))
 

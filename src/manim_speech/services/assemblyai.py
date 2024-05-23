@@ -71,12 +71,12 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
         if response.error:
             raise ValueError(response.error)
 
-        word_boundaries: list[base.WordBoundary] = []
+        word_boundaries: list[base.Boundary] = []
         text_offset = 0
         for word in response.words:
             word_boundaries.append(
-                base.WordBoundary(
-                    word=word.text,
+                base.Boundary(
+                    text=word.text,
                     start=word.start / 1000,
                     end=word.end / 1000,
                     text_offset=text_offset
@@ -89,5 +89,5 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
         return base.STTData(
             info=info,
             input=input,
-            output=base.STTOutput(text=response.text, word_boundaries=word_boundaries)
+            output=base.STTOutput(text=response.text, boundaries=word_boundaries)
         )

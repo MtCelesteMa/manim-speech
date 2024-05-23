@@ -97,12 +97,12 @@ class OpenAISTTService(base.STTService, OpenAIService):
             timestamp_granularities=["word"]
         )
 
-        word_boundaries: list[base.WordBoundary] = []
+        word_boundaries: list[base.Boundary] = []
         text_offset = 0
         for word in response.words:
             word_boundaries.append(
-                base.WordBoundary(
-                    word=word["word"],
+                base.Boundary(
+                    text=word["word"],
                     start=word["start"],
                     end=word["end"],
                     text_offset=text_offset
@@ -112,7 +112,7 @@ class OpenAISTTService(base.STTService, OpenAIService):
                 text_offset += 1
             text_offset += len(word["word"])
         
-        return base.STTData(info=info, input=input, output=base.STTOutput(text=response.text, word_boundaries=word_boundaries))
+        return base.STTData(info=info, input=input, output=base.STTOutput(text=response.text, boundaries=word_boundaries))
 
 
 class OpenAITranslationService(base.TranslationService, OpenAIService):
@@ -121,7 +121,7 @@ class OpenAITranslationService(base.TranslationService, OpenAIService):
         self.model = model
         self.client = openai.OpenAI(api_key=self.api_key)
         self.system_message = """Translate the given text from {source_language} to {target_language}. Do not output anything other than the translated text.
-        If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text."""
+        If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text. Do NOT skip any XML tags."""
     
     def translate(self, input: base.TranslationInput) -> base.TranslationData:
         info = base.ServiceInfo(

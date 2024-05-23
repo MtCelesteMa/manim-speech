@@ -25,8 +25,8 @@ def remove_bookmarks(s: str) -> str:
 
 def get_bookmark_times(text: str, tts_data: services.base.TTSData, stt_data: services.base.STTData) -> dict[str, float]:
     interpolator = interpolate.interp1d(
-        [wb.text_offset for wb in stt_data.output.word_boundaries],
-        [wb.start for wb in stt_data.output.word_boundaries],
+        [wb.text_offset for wb in stt_data.output.boundaries] + [len(stt_data.output.text)],
+        [wb.start for wb in stt_data.output.boundaries] + [stt_data.output.boundaries[-1].end],
         fill_value="extrapolate"
     )
 
@@ -63,8 +63,8 @@ def save_cache(cache_dir: pathlib.Path, data: list[SpeechData]) -> None:
 
 def create(
         text: str,
-        tts_service: services.base.TTSService | None,
-        stt_service: services.base.STTService,
+        tts_service: services.base.TTSService | None = None,
+        stt_service: services.base.STTService | None = None,
         *,
         cache_dir: pathlib.Path | str | None = None
 ) -> SpeechData:
@@ -90,11 +90,7 @@ def create(
     else:
         input_data = services.base.TTSInput(text=input_text)
         tts_data = services.base.TTSData(
-            info=services.base.ServiceInfo(
-                service_name="Manual",
-                service_type="TTS",
-                config={}
-            ),
+            info=None,
             input=input_data,
             output=services.base.TTSOutput(audio_path=services.base.TTSService.get_file_name(input_data))
         )
@@ -103,7 +99,24 @@ def create(
             manim.console.print(f"[green]{input_text}[/green]")
             manim.console.print("Rerun `manim` after you're done recording.")
             exit(1)
-    stt_data = stt_service.stt(services.base.STTInput(audio_path=tts_data.output.audio_path))
+    if isinstance(stt_service, services.base.STTService):
+        stt_data = stt_service.stt(services.base.STTInput(audio_path=tts_data.output.audio_path))
+    else:
+        stt_data = services.base.STTData(
+            info=None,
+            input=services.base.STTInput(audio_path=tts_data.output.audio_path),
+            output=services.base.STTOutput(
+                text=input_text,
+                boundaries=[
+                    services.base.Boundary(
+                        text=input_text,
+                        start=0.0,
+                        end=MP3(cache_dir / tts_data.output.audio_path).info.length,
+                        text_offset=0
+                    )
+                ]
+            )
+        )
     bookmark_times = get_bookmark_times(text, tts_data, stt_data)
 
     data = SpeechData(
