@@ -55,7 +55,8 @@ class TTSService(Service, ABC):
     def service_type(self) -> str:
         return "TTS"
     
-    def get_file_name(self, input: TTSInput) -> pathlib.Path:
+    @staticmethod
+    def get_file_name(input: TTSInput) -> pathlib.Path:
         return pathlib.Path(f"{hashlib.sha256(input.text.encode()).hexdigest()}.mp3")
     
     @abstractmethod

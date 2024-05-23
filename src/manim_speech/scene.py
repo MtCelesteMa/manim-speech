@@ -13,8 +13,8 @@ import manim
 
 
 class VoiceoverScene(manim.Scene):
-    tts_service: services.base.TTSService
-    stt_service: services.base.STTService
+    tts_service: services.base.TTSService | None = None
+    stt_service: services.base.STTService | None = None
     current_speech_data: speech.SpeechData | None = None
     current_speech_start_time: float | None = None
 
@@ -38,9 +38,7 @@ class VoiceoverScene(manim.Scene):
     
     @contextlib.contextmanager
     def voiceover(self, text: str) -> abc.Generator[speech.SpeechData, None, None]:
-        if not hasattr(self, "tts_service"):
-            raise AttributeError("TTS service not set")
-        if not hasattr(self, "stt_service"):
+        if not isinstance(self.stt_service, services.base.STTService):
             raise AttributeError("STT service not set")
         try:
             self.current_speech_data = speech.create(text, self.tts_service, self.stt_service)
@@ -54,7 +52,7 @@ class VoiceoverScene(manim.Scene):
 
 
 class TranslationScene(manim.Scene):
-    translation_service: services.base.TranslationService
+    translation_service: services.base.TranslationService | None = None
     _ = staticmethod(gettext.gettext)
 
     def set_translation_service(self, service: services.base.TranslationService) -> None:
@@ -62,9 +60,6 @@ class TranslationScene(manim.Scene):
     
     def translate(self, file: pathlib.Path | str, domain: str, source_language: str, target_language: str,) -> None:
         translation.init_translation_env(file, domain)
-        if hasattr(self, "translation_service"):
-            translation.translate_po_file(domain, source_language, target_language, service=self.translation_service)
-        else:
-            translation.translate_po_file(domain, source_language, target_language)
+        translation.translate_po_file(domain, source_language, target_language, service=self.translation_service)
         trans = gettext.translation(domain, languages=[target_language], localedir="locales")
         self._ = trans.gettext

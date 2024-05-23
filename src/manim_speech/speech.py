@@ -63,7 +63,7 @@ def save_cache(cache_dir: pathlib.Path, data: list[SpeechData]) -> None:
 
 def create(
         text: str,
-        tts_service: services.base.TTSService,
+        tts_service: services.base.TTSService | None,
         stt_service: services.base.STTService,
         *,
         cache_dir: pathlib.Path | str | None = None
@@ -85,7 +85,24 @@ def create(
         cache = []
 
     input_text = remove_bookmarks(text)
-    tts_data = tts_service.tts(services.base.TTSInput(text=input_text))
+    if isinstance(tts_service, services.base.TTSService):
+        tts_data = tts_service.tts(services.base.TTSInput(text=input_text))
+    else:
+        input_data = services.base.TTSInput(text=input_text)
+        tts_data = services.base.TTSData(
+            info=services.base.ServiceInfo(
+                service_name="Manual",
+                service_type="TTS",
+                config={}
+            ),
+            input=input_data,
+            output=services.base.TTSOutput(audio_path=services.base.TTSService.get_file_name(input_data))
+        )
+        if not (cache_dir / tts_data.output.audio_path).exists():
+            manim.console.print(f"Please record the following text manually and save it to {cache_dir / tts_data.output.audio_path}.")
+            manim.console.print(f"[green]{input_text}[/green]")
+            manim.console.print("Rerun `manim` after you're done recording.")
+            exit(1)
     stt_data = stt_service.stt(services.base.STTInput(audio_path=tts_data.output.audio_path))
     bookmark_times = get_bookmark_times(text, tts_data, stt_data)
 
