@@ -76,12 +76,14 @@ class OpenAISTTService(base.STTService, OpenAIService):
     def __init__(
             self,
             model: str = "whisper-1",
+            language: str | None = None,
             *,
             cache_dir: pathlib.Path | str | None = None,
             api_key: str | None = None
     ) -> None:
         super().__init__(cache_dir=cache_dir, api_key=api_key)
         self.model = model
+        self.language = language
     
     def stt(self, input: base.STTInput) -> base.STTData:
         info = base.ServiceInfo(
@@ -90,12 +92,21 @@ class OpenAISTTService(base.STTService, OpenAIService):
             config={"model": self.model}
         )
 
-        response = self.client.audio.transcriptions.create(
-            file=(self.cache_dir / input.audio_path).open("rb"),
-            model=self.model,
-            response_format="verbose_json",
-            timestamp_granularities=["word"]
-        )
+        if isinstance(self.language, str):
+            response = self.client.audio.transcriptions.create(
+                file=(self.cache_dir / input.audio_path).open("rb"),
+                model=self.model,
+                language=self.language,
+                response_format="verbose_json",
+                timestamp_granularities=["word"]
+            )
+        else:
+            response = self.client.audio.transcriptions.create(
+                file=(self.cache_dir / input.audio_path).open("rb"),
+                model=self.model,
+                response_format="verbose_json",
+                timestamp_granularities=["word"]
+            )
 
         word_boundaries: list[base.Boundary] = []
         text_offset = 0
@@ -119,7 +130,6 @@ class OpenAITranslationService(base.TranslationService, OpenAIService):
     def __init__(self, model: str = "gpt-4o", *, cache_dir: pathlib.Path | str | None = None, api_key: str | None = None) -> None:
         super().__init__(cache_dir=cache_dir, api_key=api_key)
         self.model = model
-        self.client = openai.OpenAI(api_key=self.api_key)
         self.system_message = """Translate the given text from {source_language} to {target_language}. Do not output anything other than the translated text.
         If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text. Do NOT skip any XML tags."""
     
