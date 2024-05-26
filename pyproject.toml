@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "manim_speech"
-version = "0.2.0-dev"
+version = "0.2.0"
 dependencies = [
     "manim",
     "pydantic",
@@ -37,4 +37,5 @@ chinese = ["opencc"]
 
 [project.urls]
 Homepage = "https://github.com/MtCelesteMa/manim-speech"
+Repository = "https://github.com/MtCelesteMa/manim-speech"
 "Bug Tracker" = "https://github.com/MtCelesteMa/manim-speech/issues"

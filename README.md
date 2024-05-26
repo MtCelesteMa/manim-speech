@@ -15,8 +15,13 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 
 ## Features
 
-* Adding AI-generated voiceovers to Manim animations.
-* Translating text between languages.
+* Integrate voiceovers into Manim animations.
+
+    * Utilize bookmarks to pause for key moments in the voiceover (identical to Manim Voiceover functionality).
+
+* Easily translate text within Manim animations to various languages with minimal code.
+
+* Leverage AI-driven services for text-to-speech, speech-to-text, and translation.
 
 ### Services
 
@@ -44,8 +49,8 @@ from manim_speech.services import openai as openai_service
 
 class MeaningOfLife(manim_speech.VoiceoverScene):
     def construct(self) -> None:
-        self.set_tts_service(openai_service.OpenAITTSService())
-        self.set_stt_service(openai_service.OpenAISTTService())
+        self.set_tts_service(openai_service.OpenAITTSService()) # Remove this line if you want to manually record voiceovers.
+        self.set_stt_service(openai_service.OpenAISTTService()) # Only required if you use bookmarks.
 
         with self.voiceover("What is the meaning of life?") as speech_data:
             txt = manim.Text("The meaning of life is 42.")
@@ -59,13 +64,12 @@ The same scene, but translated into Traditional Chinese:
 import manim
 import manim_speech
 from manim_speech.services import openai as openai_service
-from manim_speech.services import deepl as deepl_service
 
 class MeaningOfLife(manim_speech.VoiceoverScene, manim_speech.TranslationScene):
     def construct(self) -> None:
-        self.set_tts_service(openai_service.OpenAITTSService())
-        self.set_stt_service(openai_service.OpenAISTTService())
-        self.set_translation_service(deepl_service.DeepLTranslationService())
+        self.set_tts_service(openai_service.OpenAITTSService()) # Remove this line if you want to manually record voiceovers.
+        self.set_stt_service(openai_service.OpenAISTTService()) # Only required if you use bookmarks.
+        self.set_translation_service(openai_service.OpenAITranslationService()) # Remove this line if you want to manually translate text.
 
         self.translate(__file__, "meaning_of_life", "en", "zh_tw")
         _ = self._
