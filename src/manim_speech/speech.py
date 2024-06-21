@@ -1,14 +1,14 @@
 """Speech utils for Manim Speech."""
 
-from . import services
-
 import pathlib
 import re
 
 import manim
-from scipy import interpolate
 import pydantic
 from mutagen.mp3 import MP3
+from scipy import interpolate
+
+from . import services
 
 
 class SpeechData(pydantic.BaseModel):
@@ -23,11 +23,15 @@ def remove_bookmarks(s: str) -> str:
     return re.sub(r"<bookmark\s*mark\s*=['\"]\w*[\"']\s*/>", "", s)
 
 
-def get_bookmark_times(text: str, tts_data: services.base.TTSData, stt_data: services.base.STTData) -> dict[str, float]:
+def get_bookmark_times(
+    text: str, tts_data: services.base.TTSData, stt_data: services.base.STTData
+) -> dict[str, float]:
     interpolator = interpolate.interp1d(
-        [wb.text_offset for wb in stt_data.output.boundaries] + [len(stt_data.output.text)],
-        [wb.start for wb in stt_data.output.boundaries] + [stt_data.output.boundaries[-1].end],
-        fill_value="extrapolate"
+        [wb.text_offset for wb in stt_data.output.boundaries]
+        + [len(stt_data.output.text)],
+        [wb.start for wb in stt_data.output.boundaries]
+        + [stt_data.output.boundaries[-1].end],
+        fill_value="extrapolate",
     )
 
     text_len = len(tts_data.input.text)
@@ -41,7 +45,7 @@ def get_bookmark_times(text: str, tts_data: services.base.TTSData, stt_data: ser
             bookmark_dist[match.group(1)] = len(content)
         else:
             content += part
-        
+
     bookmark_times: dict[str, float] = {}
     for mark, dist in bookmark_dist.items():
         bookmark_times[mark] = interpolator(dist * transcribed_text_len / text_len)
@@ -58,15 +62,19 @@ def save_cache(cache_dir: pathlib.Path, data: list[SpeechData]) -> None:
     if not cache_dir.exists():
         cache_dir.mkdir(parents=True)
     with (cache_dir / "cache.json").open("w") as f:
-        f.write(pydantic.TypeAdapter(list[SpeechData]).dump_json(data, indent=4).decode("utf-8"))
+        f.write(
+            pydantic.TypeAdapter(list[SpeechData])
+            .dump_json(data, indent=4)
+            .decode("utf-8")
+        )
 
 
 def create(
-        text: str,
-        tts_service: services.base.TTSService | None = None,
-        stt_service: services.base.STTService | None = None,
-        *,
-        cache_dir: pathlib.Path | str | None = None
+    text: str,
+    tts_service: services.base.TTSService | None = None,
+    stt_service: services.base.STTService | None = None,
+    *,
+    cache_dir: pathlib.Path | str | None = None,
 ) -> SpeechData:
     if isinstance(cache_dir, type(None)):
         cache_dir = pathlib.Path(manim.config.media_dir) / "manim_speech"
@@ -75,7 +83,7 @@ def create(
 
     if not cache_dir.exists():
         cache_dir.mkdir(parents=True)
-    
+
     if (cache_dir / "cache.json").exists():
         cache = load_cache(cache_dir)
         for data in cache:
@@ -92,15 +100,21 @@ def create(
         tts_data = services.base.TTSData(
             info=None,
             input=input_data,
-            output=services.base.TTSOutput(audio_path=services.base.TTSService.get_file_name(input_data))
+            output=services.base.TTSOutput(
+                audio_path=services.base.TTSService.get_file_name(input_data)
+            ),
         )
         if not (cache_dir / tts_data.output.audio_path).exists():
-            manim.console.print(f"Please record the following text manually and save it to {cache_dir / tts_data.output.audio_path}.")
+            manim.console.print(
+                f"Please record the following text manually and save it to {cache_dir / tts_data.output.audio_path}."
+            )
             manim.console.print(f"[green]{input_text}[/green]")
             manim.console.print("Rerun `manim` after you're done recording.")
             exit(1)
     if isinstance(stt_service, services.base.STTService):
-        stt_data = stt_service.stt(services.base.STTInput(audio_path=tts_data.output.audio_path))
+        stt_data = stt_service.stt(
+            services.base.STTInput(audio_path=tts_data.output.audio_path)
+        )
     else:
         stt_data = services.base.STTData(
             info=None,
@@ -112,10 +126,10 @@ def create(
                         text=input_text,
                         start=0.0,
                         end=MP3(cache_dir / tts_data.output.audio_path).info.length,
-                        text_offset=0
+                        text_offset=0,
                     )
-                ]
-            )
+                ],
+            ),
         )
     bookmark_times = get_bookmark_times(text, tts_data, stt_data)
 

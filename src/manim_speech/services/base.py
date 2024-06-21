@@ -1,7 +1,7 @@
 """Base classes for services."""
 
-import pathlib
 import hashlib
+import pathlib
 from abc import ABC, abstractmethod
 
 import manim
@@ -24,12 +24,12 @@ class Service(ABC):
 
         if not self.cache_dir.exists():
             self.cache_dir.mkdir(parents=True)
-    
+
     @property
     @abstractmethod
     def service_name(self) -> str:
         raise NotImplementedError
-    
+
     @property
     @abstractmethod
     def service_type(self) -> str:
@@ -54,11 +54,11 @@ class TTSService(Service, ABC):
     @property
     def service_type(self) -> str:
         return "TTS"
-    
+
     @staticmethod
     def get_file_name(input: TTSInput) -> pathlib.Path:
         return pathlib.Path(f"{hashlib.sha256(input.text.encode()).hexdigest()}.mp3")
-    
+
     @abstractmethod
     def tts(self, input: TTSInput) -> TTSData:
         raise NotImplementedError
@@ -94,7 +94,7 @@ class STTService(Service, ABC):
     @property
     def service_type(self) -> str:
         return "STT"
-    
+
     @abstractmethod
     def stt(self, input: STTInput) -> STTData:
         raise NotImplementedError
@@ -120,7 +120,7 @@ class TranslationService(Service, ABC):
     @property
     def service_type(self) -> str:
         return "Translation"
-    
+
     @abstractmethod
     def translate(self, input: TranslationInput) -> TranslationData:
         raise NotImplementedError

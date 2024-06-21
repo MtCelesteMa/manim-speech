@@ -1,6 +1,6 @@
 """Manim plugin for adding speech to videos."""
 
-from . import services
-from . import speech
-from . import translation
-from .scene import VoiceoverScene, TranslationScene
+from . import services, speech, translation
+from .scene import TranslationScene, VoiceoverScene
+
+__all__ = ["services", "speech", "translation", "TranslationScene", "VoiceoverScene"]
