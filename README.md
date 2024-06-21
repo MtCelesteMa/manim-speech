@@ -27,11 +27,13 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 
 | Service Name | Optional Dependency Set | Is Local | Text-To-Speech | Speech-To-Text | Translation |
 |--------------|-------------------------|----------|----------------|----------------|-------------|
-| OpenAI       | `openai`                | No       | Yes            | Yes            | Yes         |
+| OpenAI       | `openai`                | No*      | Yes            | Yes            | Yes         |
 | ElevenLabs   | `elevenlabs`            | No       | Yes            | No             | No          |
 | Whisper      | `whisper`               | Yes      | No             | Yes            | No          |
 | AssemblyAI   | `assemblyai`            | No       | No             | Yes            | No          |
 | DeepL        | `deepl`                 | No       | No             | No             | Yes         |
+
+\* The OpenAI service can use any backend compatible with the OpenAI API through the `base_url` parameter, some of which are local (e.g., LocalAI).
 
 #### Notes on Chinese Translations
 

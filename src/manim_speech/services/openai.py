@@ -13,7 +13,11 @@ except ImportError:
 
 class OpenAIService(base.Service):
     def __init__(
-        self, *, cache_dir: pathlib.Path | str | None = None, api_key: str | None = None
+        self,
+        *,
+        cache_dir: pathlib.Path | str | None = None,
+        api_key: str | None = None,
+        base_url: str | None = None,
     ) -> None:
         super().__init__(cache_dir=cache_dir)
         if not isinstance(api_key, str):
@@ -21,8 +25,9 @@ class OpenAIService(base.Service):
             if not isinstance(api_key, str):
                 raise ValueError("OpenAI API key is not provided")
         self.api_key = api_key
+        self.base_url = base_url
 
-        self.client = openai.OpenAI(api_key=self.api_key)
+        self.client = openai.OpenAI(api_key=self.api_key, base_url=base_url)
 
     @property
     def service_name(self) -> str:
@@ -38,8 +43,9 @@ class OpenAITTSService(base.TTSService, OpenAIService):
         *,
         cache_dir: pathlib.Path | str | None = None,
         api_key: str | None = None,
+        base_url: str | None = None,
     ) -> None:
-        super().__init__(cache_dir=cache_dir, api_key=api_key)
+        super().__init__(cache_dir=cache_dir, api_key=api_key, base_url=base_url)
         self.voice = voice
         self.model = model
         self.speed = speed
@@ -74,8 +80,9 @@ class OpenAISTTService(base.STTService, OpenAIService):
         *,
         cache_dir: pathlib.Path | str | None = None,
         api_key: str | None = None,
+        base_url: str | None = None,
     ) -> None:
-        super().__init__(cache_dir=cache_dir, api_key=api_key)
+        super().__init__(cache_dir=cache_dir, api_key=api_key, base_url=base_url)
         self.model = model
         self.language = language
 
@@ -131,8 +138,9 @@ class OpenAITranslationService(base.TranslationService, OpenAIService):
         *,
         cache_dir: pathlib.Path | str | None = None,
         api_key: str | None = None,
+        base_url: str | None = None,
     ) -> None:
-        super().__init__(cache_dir=cache_dir, api_key=api_key)
+        super().__init__(cache_dir=cache_dir, api_key=api_key, base_url=base_url)
         self.model = model
         self.system_message = """Translate the given text from {source_language} to {target_language}. Do not output anything other than the translated text.
         If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text. Do NOT skip any XML tags."""

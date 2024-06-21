@@ -50,7 +50,7 @@ class TTSData(pydantic.BaseModel):
     output: TTSOutput
 
 
-class TTSService(Service, ABC):
+class TTSService(Service):
     @property
     def service_type(self) -> str:
         return "TTS"
@@ -90,7 +90,7 @@ class STTData(pydantic.BaseModel):
     output: STTOutput
 
 
-class STTService(Service, ABC):
+class STTService(Service):
     @property
     def service_type(self) -> str:
         return "STT"
@@ -116,7 +116,7 @@ class TranslationData(pydantic.BaseModel):
     output: TranslationOutput
 
 
-class TranslationService(Service, ABC):
+class TranslationService(Service):
     @property
     def service_type(self) -> str:
         return "Translation"
