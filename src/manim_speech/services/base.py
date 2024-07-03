@@ -1,53 +1,19 @@
 """Base classes for services."""
 
-import hashlib
 import pathlib
 from abc import ABC, abstractmethod
 
-import manim
 import pydantic
 
 
-class ServiceInfo(pydantic.BaseModel):
-    service_name: str
-    service_type: str
-    config: pydantic.JsonValue
-
-
 class Service(ABC):
-    def __init__(self, *, cache_dir: pathlib.Path | str | None = None) -> None:
-        if isinstance(cache_dir, type(None)):
-            cache_dir = pathlib.Path(manim.config.media_dir) / "manim_speech"
-        elif isinstance(cache_dir, str):
-            cache_dir = pathlib.Path(cache_dir)
-        self.cache_dir = cache_dir
-
-        if not self.cache_dir.exists():
-            self.cache_dir.mkdir(parents=True)
+    @property
+    @abstractmethod
+    def service_name(self) -> str: ...
 
     @property
     @abstractmethod
-    def service_name(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def service_type(self) -> str:
-        raise NotImplementedError
-
-
-class TTSInput(pydantic.BaseModel):
-    text: str
-
-
-class TTSOutput(pydantic.BaseModel):
-    audio_path: pathlib.Path
-
-
-class TTSData(pydantic.BaseModel):
-    info: ServiceInfo | None
-    input: TTSInput
-    output: TTSOutput
+    def service_type(self) -> str: ...
 
 
 class TTSService(Service):
@@ -55,39 +21,30 @@ class TTSService(Service):
     def service_type(self) -> str:
         return "TTS"
 
-    @staticmethod
-    def get_file_name(input: TTSInput) -> pathlib.Path:
-        return pathlib.Path(f"{hashlib.sha256(input.text.encode()).hexdigest()}.mp3")
-
     @abstractmethod
-    def tts(self, input: TTSInput) -> TTSData:
-        raise NotImplementedError
+    def tts(self, text: str, out_path: pathlib.Path | str) -> None: ...
 
 
 class Boundary(pydantic.BaseModel):
     text: str
     start: float
     end: float
-    text_offset: int
+    text_start: int
 
+    @pydantic.computed_field
     @property
     def length(self) -> int:
         return len(self.text)
 
+    @pydantic.computed_field
+    @property
+    def text_end(self) -> int:
+        return self.text_start + self.length
 
-class STTInput(pydantic.BaseModel):
-    audio_path: pathlib.Path
 
-
-class STTOutput(pydantic.BaseModel):
+class STTResults(pydantic.BaseModel):
     text: str
     boundaries: list[Boundary]
-
-
-class STTData(pydantic.BaseModel):
-    info: ServiceInfo | None
-    input: STTInput
-    output: STTOutput
 
 
 class STTService(Service):
@@ -96,24 +53,7 @@ class STTService(Service):
         return "STT"
 
     @abstractmethod
-    def stt(self, input: STTInput) -> STTData:
-        raise NotImplementedError
-
-
-class TranslationInput(pydantic.BaseModel):
-    text: str
-    source_language: str
-    target_language: str
-
-
-class TranslationOutput(pydantic.BaseModel):
-    translated_text: str
-
-
-class TranslationData(pydantic.BaseModel):
-    info: ServiceInfo | None
-    input: TranslationInput
-    output: TranslationOutput
+    def stt(self, in_path: pathlib.Path | str) -> STTResults: ...
 
 
 class TranslationService(Service):
@@ -122,5 +62,6 @@ class TranslationService(Service):
         return "Translation"
 
     @abstractmethod
-    def translate(self, input: TranslationInput) -> TranslationData:
-        raise NotImplementedError
+    def translate(
+        self, text: str, *, src_lang: str | None = None, dst_lang: str | None = None
+    ) -> str: ...

@@ -8,18 +8,13 @@ from . import base
 try:
     import openai
 except ImportError:
-    raise ImportError("Please install openai with `pip install openai`")
+    raise ImportError("Please install openai with `pip install openai`.")
 
 
 class OpenAIService(base.Service):
     def __init__(
-        self,
-        *,
-        cache_dir: pathlib.Path | str | None = None,
-        api_key: str | None = None,
-        base_url: str | None = None,
+        self, *, api_key: str | None = None, base_url: str | None = None
     ) -> None:
-        super().__init__(cache_dir=cache_dir)
         if not isinstance(api_key, str):
             api_key = os.getenv("OPENAI_API_KEY")
             if not isinstance(api_key, str):
@@ -41,35 +36,21 @@ class OpenAITTSService(base.TTSService, OpenAIService):
         model: str = "tts-1-hd",
         speed: float = 1.0,
         *,
-        cache_dir: pathlib.Path | str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
     ) -> None:
-        super().__init__(cache_dir=cache_dir, api_key=api_key, base_url=base_url)
+        super().__init__(api_key=api_key, base_url=base_url)
         self.voice = voice
         self.model = model
         self.speed = speed
 
-    def tts(self, input: base.TTSInput) -> base.TTSData:
-        file_name = self.get_file_name(input)
+    def tts(self, text: str, out_path: pathlib.Path | str) -> None:
+        if isinstance(out_path, str):
+            out_path = pathlib.Path(out_path)
 
-        data = base.TTSData(
-            info=base.ServiceInfo(
-                service_name=self.service_name,
-                service_type=self.service_type,
-                config={"voice": self.voice, "model": self.model, "speed": self.speed},
-            ),
-            input=input,
-            output=base.TTSOutput(audio_path=file_name),
-        )
-
-        if not (self.cache_dir / file_name).exists():
-            response = self.client.audio.speech.create(
-                input=input.text, model=self.model, voice=self.voice, speed=self.speed
-            )
-            response.stream_to_file(self.cache_dir / file_name)
-
-        return data
+        self.client.audio.speech.create(
+            input=text, model=self.model, voice=self.voice, speed=self.speed
+        ).stream_to_file(out_path)
 
 
 class OpenAISTTService(base.STTService, OpenAIService):
@@ -78,101 +59,93 @@ class OpenAISTTService(base.STTService, OpenAIService):
         model: str = "whisper-1",
         language: str | None = None,
         *,
-        cache_dir: pathlib.Path | str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
     ) -> None:
-        super().__init__(cache_dir=cache_dir, api_key=api_key, base_url=base_url)
+        super().__init__(api_key=api_key, base_url=base_url)
         self.model = model
         self.language = language
 
-    def stt(self, input: base.STTInput) -> base.STTData:
-        info = base.ServiceInfo(
-            service_name=self.service_name,
-            service_type=self.service_type,
-            config={"model": self.model},
-        )
+    def stt(self, in_path: pathlib.Path | str) -> base.STTResults:
+        if isinstance(in_path, str):
+            in_path = pathlib.Path(in_path)
 
-        if isinstance(self.language, str):
-            response = self.client.audio.transcriptions.create(
-                file=(self.cache_dir / input.audio_path).open("rb"),
-                model=self.model,
-                language=self.language,
-                response_format="verbose_json",
-                timestamp_granularities=["word"],
-            )
-        else:
-            response = self.client.audio.transcriptions.create(
-                file=(self.cache_dir / input.audio_path).open("rb"),
-                model=self.model,
-                response_format="verbose_json",
-                timestamp_granularities=["word"],
-            )
+        with in_path.open("rb") as af:
+            if isinstance(self.language, str):
+                response = self.client.audio.transcriptions.create(
+                    file=af,
+                    model=self.model,
+                    language=self.language,
+                    response_format="verbose_json",
+                    timestamp_granularities=["word"],
+                )
+            else:
+                response = self.client.audio.transcriptions.create(
+                    file=af,
+                    model=self.model,
+                    response_format="verbose_json",
+                    timestamp_granularities=["word"],
+                )
 
-        word_boundaries: list[base.Boundary] = []
+        boundaries: list[base.Boundary] = []
         text_offset = 0
         for word in response.words:
-            word_boundaries.append(
+            text_start = response.text.find(word["word"], text_offset)
+            boundaries.append(
                 base.Boundary(
                     text=word["word"],
                     start=word["start"],
                     end=word["end"],
-                    text_offset=text_offset,
+                    text_start=text_start,
                 )
             )
-            if text_offset != 0 and response.text[text_offset] == " ":
-                text_offset += 1
-            text_offset += len(word["word"])
+            text_offset = text_start + len(word["word"])
 
-        return base.STTData(
-            info=info,
-            input=input,
-            output=base.STTOutput(text=response.text, boundaries=word_boundaries),
-        )
+        return base.STTResults(text=response.text, boundaries=boundaries)
 
 
 class OpenAITranslationService(base.TranslationService, OpenAIService):
     def __init__(
         self,
         model: str = "gpt-4o",
+        src_lang: str | None = None,
+        dst_lang: str | None = None,
         *,
-        cache_dir: pathlib.Path | str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
     ) -> None:
-        super().__init__(cache_dir=cache_dir, api_key=api_key, base_url=base_url)
+        super().__init__(api_key=api_key, base_url=base_url)
         self.model = model
-        self.system_message = """Translate the given text from {source_language} to {target_language}. Do not output anything other than the translated text.
+        self.src_lang = src_lang
+        self.dst_lang = dst_lang
+        self.system_message = """Translate the given text from {src_lang} to {dst_lang}. Do not output anything other than the translated text.
         If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text. Do NOT skip any XML tags."""
 
-    def translate(self, input: base.TranslationInput) -> base.TranslationData:
-        info = base.ServiceInfo(
-            service_name=self.service_name,
-            service_type=self.service_type,
-            config={"model": self.model},
-        )
+    def translate(
+        self, text: str, *, src_lang: str | None = None, dst_lang: str | None = None
+    ) -> str:
+        src_lang = src_lang if isinstance(src_lang, str) else self.src_lang
+        dst_lang = dst_lang if isinstance(dst_lang, str) else self.dst_lang
+        if isinstance(src_lang, type(None)) or isinstance(dst_lang, type(None)):
+            raise ValueError("Either 'src_lang' or 'dst_lang' were not specified.")
+
         result = (
             self.client.chat.completions.create(
-                model=self.model,
                 messages=[
                     {
                         "role": "system",
                         "content": self.system_message.format(
-                            source_language=input.source_language,
-                            target_language=input.target_language,
+                            src_lang=src_lang, dst_lang=dst_lang
                         ),
                     },
-                    {"role": "user", "content": input.text},
+                    {"role": "user", "content": text},
                 ],
+                model=self.model,
                 max_tokens=4095,
             )
             .choices[0]
             .message.content
         )
-        if not isinstance(result, str):
+        if isinstance(result, type(None)):
             raise ValueError(f"Unexpected response: {result}")
-        return base.TranslationData(
-            info=info,
-            input=input,
-            output=base.TranslationOutput(translated_text=result),
-        )
+        return result
