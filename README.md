@@ -29,11 +29,13 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 |--------------|-------------------------|----------|----------------|----------------|-------------|
 | OpenAI       | `openai`                | No*      | Yes            | Yes            | Yes         |
 | ElevenLabs   | `elevenlabs`            | No       | Yes            | No             | No          |
-| Whisper      | `whisper`               | Yes      | No             | Yes            | No          |
+| Whisper      | ~~`whisper`~~**         | Yes      | No             | Yes            | No          |
 | AssemblyAI   | `assemblyai`            | No       | No             | Yes            | No          |
 | DeepL        | `deepl`                 | No       | No             | No             | Yes         |
 
 \* The OpenAI service can use any backend compatible with the OpenAI API through the `base_url` parameter, some of which are local (e.g., LocalAI).
+
+\** For now, the optional dependencies for the Whisper service cannot be installed automatically. To use the Whisper service, run `pip install openai-whisper`.
 
 #### Notes on Chinese Translations
 
