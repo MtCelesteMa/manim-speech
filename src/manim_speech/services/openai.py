@@ -66,7 +66,7 @@ class OpenAISTTService(base.STTService, OpenAIService):
         self.model = model
         self.language = language
 
-    def stt(self, in_path: pathlib.Path | str) -> base.STTResults:
+    def stt(self, in_path: pathlib.Path | str) -> base.Transcript:
         if isinstance(in_path, str):
             in_path = pathlib.Path(in_path)
 
@@ -101,7 +101,7 @@ class OpenAISTTService(base.STTService, OpenAIService):
             )
             text_offset = text_start + len(word["word"])
 
-        return base.STTResults(text=response.text, boundaries=boundaries)
+        return base.Transcript(text=response.text, boundaries=boundaries)
 
 
 class OpenAITranslationService(base.TranslationService, OpenAIService):

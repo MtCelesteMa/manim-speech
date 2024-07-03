@@ -42,7 +42,7 @@ class Boundary(pydantic.BaseModel):
         return self.text_start + self.length
 
 
-class STTResults(pydantic.BaseModel):
+class Transcript(pydantic.BaseModel):
     text: str
     boundaries: list[Boundary]
 
@@ -53,7 +53,7 @@ class STTService(Service):
         return "STT"
 
     @abstractmethod
-    def stt(self, in_path: pathlib.Path | str) -> STTResults: ...
+    def stt(self, in_path: pathlib.Path | str) -> Transcript: ...
 
 
 class TranslationService(Service):

@@ -1,22 +1,23 @@
 """Speech utils for Manim Speech."""
 
+import hashlib
 import pathlib
 import re
 
 import manim
+import numpy as np
 import pydantic
+import slugify
 from mutagen.mp3 import MP3
-from scipy import interpolate
 
 from . import services
 
 
 class SpeechData(pydantic.BaseModel):
-    text: str
-    tts_data: services.base.TTSData
-    stt_data: services.base.STTData
+    path: pathlib.Path
+    transcript: services.base.Transcript
     duration: float
-    bookmark_times: dict[str, float]
+    bookmarks: dict[str, float]
 
 
 def remove_bookmarks(s: str) -> str:
@@ -24,49 +25,27 @@ def remove_bookmarks(s: str) -> str:
 
 
 def get_bookmark_times(
-    text: str, tts_data: services.base.TTSData, stt_data: services.base.STTData
+    text: str, transcript: services.base.Transcript
 ) -> dict[str, float]:
-    interpolator = interpolate.interp1d(
-        [wb.text_offset for wb in stt_data.output.boundaries]
-        + [len(stt_data.output.text)],
-        [wb.start for wb in stt_data.output.boundaries]
-        + [stt_data.output.boundaries[-1].end],
-        fill_value="extrapolate",
-    )
-
-    text_len = len(tts_data.input.text)
-    transcribed_text_len = len(stt_data.output.text.strip())
+    cleaned_text = remove_bookmarks(text)
+    ct_len = len(cleaned_text)
+    tt_len = len(transcript.text.strip())
 
     bookmark_dist: dict[str, int] = {}
-    content: str = ""
+    offset = 0
     for part in re.split(r"(<bookmark\s*mark\s*=[\'\"]\w*[\"\']\s*/>)", text):
         match = re.match(r"<bookmark\s*mark\s*=[\'\"](.*)[\"\']\s*/>", part)
-        if not isinstance(match, type(None)):
-            bookmark_dist[match.group(1)] = len(content)
+        if isinstance(match, re.Match):
+            bookmark_dist[match.group(1)] = offset
         else:
-            content += part
+            offset += len(part)
 
-    bookmark_times: dict[str, float] = {}
-    for mark, dist in bookmark_dist.items():
-        bookmark_times[mark] = interpolator(dist * transcribed_text_len / text_len)
-
-    return bookmark_times
-
-
-def load_cache(cache_dir: pathlib.Path) -> list[SpeechData]:
-    with (cache_dir / "cache.json").open("r") as f:
-        return pydantic.TypeAdapter(list[SpeechData]).validate_json(f.read())
-
-
-def save_cache(cache_dir: pathlib.Path, data: list[SpeechData]) -> None:
-    if not cache_dir.exists():
-        cache_dir.mkdir(parents=True)
-    with (cache_dir / "cache.json").open("w") as f:
-        f.write(
-            pydantic.TypeAdapter(list[SpeechData])
-            .dump_json(data, indent=4)
-            .decode("utf-8")
-        )
+    bookmark_times = np.interp(
+        np.array([v for k, v in bookmark_dist.items()]) * tt_len / ct_len,
+        [b.text_start for b in transcript.boundaries] + [len(transcript.text)],
+        [b.start for b in transcript.boundaries] + [transcript.boundaries[-1].end],
+    )
+    return {name: t for name, t in zip(bookmark_dist.keys(), bookmark_times)}
 
 
 def create(
@@ -80,67 +59,53 @@ def create(
         cache_dir = pathlib.Path(manim.config.media_dir) / "manim_speech"
     elif isinstance(cache_dir, str):
         cache_dir = pathlib.Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
 
-    if not cache_dir.exists():
-        cache_dir.mkdir(parents=True)
+    cleaned_text = remove_bookmarks(text)
+    slug = f"{slugify.slugify(cleaned_text, max_length=50, word_boundary=True, save_order=True)}-{hashlib.sha256(cleaned_text.encode()).hexdigest()[:8]}"
+    cache_path = cache_dir / slug
+    if not cache_path.exists():
+        cache_path.mkdir(parents=True)
+        with (cache_path / "text.txt").open("w") as f:
+            f.write(cleaned_text)
 
-    if (cache_dir / "cache.json").exists():
-        cache = load_cache(cache_dir)
-        for data in cache:
-            if data.text == text:
-                return data
-    else:
-        cache = []
-
-    input_text = remove_bookmarks(text)
-    if isinstance(tts_service, services.base.TTSService):
-        tts_data = tts_service.tts(services.base.TTSInput(text=input_text))
-    else:
-        input_data = services.base.TTSInput(text=input_text)
-        tts_data = services.base.TTSData(
-            info=None,
-            input=input_data,
-            output=services.base.TTSOutput(
-                audio_path=services.base.TTSService.get_file_name(input_data)
-            ),
-        )
-        if not (cache_dir / tts_data.output.audio_path).exists():
-            manim.console.print(
-                f"Please record the following text manually and save it to {cache_dir / tts_data.output.audio_path}."
+    audio_path = cache_path / "audio.mp3"
+    if not audio_path.exists():
+        if isinstance(tts_service, services.base.TTSService):
+            tts_service.tts(cleaned_text, audio_path)
+        else:
+            return SpeechData(
+                path=cache_path,
+                transcript=services.base.Transcript(text="", boundaries=[]),
+                duration=1e-6,
+                bookmarks={},
             )
-            manim.console.print(f"[green]{input_text}[/green]")
-            manim.console.print("Rerun `manim` after you're done recording.")
-            exit(1)
-    if isinstance(stt_service, services.base.STTService):
-        stt_data = stt_service.stt(
-            services.base.STTInput(audio_path=tts_data.output.audio_path)
-        )
+
+    transcript_path = cache_path / "transcript.json"
+    if transcript_path.exists():
+        with transcript_path.open() as f:
+            transcript = services.base.Transcript.model_validate_json(f.read())
     else:
-        stt_data = services.base.STTData(
-            info=None,
-            input=services.base.STTInput(audio_path=tts_data.output.audio_path),
-            output=services.base.STTOutput(
-                text=input_text,
+        if isinstance(stt_service, services.base.STTService):
+            transcript = stt_service.stt(audio_path)
+            with transcript_path.open("w") as f:
+                f.write(transcript.model_dump_json(indent=4))
+        else:
+            transcript = services.base.Transcript(
+                text=cleaned_text,
                 boundaries=[
                     services.base.Boundary(
-                        text=input_text,
+                        text=cleaned_text,
                         start=0.0,
-                        end=MP3(cache_dir / tts_data.output.audio_path).info.length,
-                        text_offset=0,
+                        end=MP3(audio_path).info.length,
+                        text_start=0,
                     )
                 ],
-            ),
-        )
-    bookmark_times = get_bookmark_times(text, tts_data, stt_data)
+            )
 
-    data = SpeechData(
-        text=text,
-        tts_data=tts_data,
-        stt_data=stt_data,
-        duration=MP3(cache_dir / tts_data.output.audio_path).info.length,
-        bookmark_times=bookmark_times,
+    return SpeechData(
+        path=cache_path,
+        transcript=transcript,
+        duration=MP3(audio_path).info.length,
+        bookmarks=get_bookmark_times(text, transcript),
     )
-    cache.append(data)
-    save_cache(cache_dir, cache)
-
-    return data

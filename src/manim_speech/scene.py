@@ -40,7 +40,7 @@ class VoiceoverScene(manim.Scene):
             self.current_speech_start_time, type(None)
         ):
             self.safe_wait(
-                self.current_speech_data.bookmark_times[key]
+                self.current_speech_data.bookmarks.get(key, 0.0)
                 - (self.renderer.time - self.current_speech_start_time)
             )
 
@@ -55,13 +55,8 @@ class VoiceoverScene(manim.Scene):
                 text, self.tts_service, self.stt_service
             )
             self.current_speech_start_time = self.renderer.time
-            self.add_sound(
-                str(
-                    pathlib.Path(manim.config.media_dir)
-                    / "manim_speech"
-                    / self.current_speech_data.tts_data.output.audio_path
-                )
-            )
+            if (self.current_speech_data.path / "audio.mp3").exists():
+                self.add_sound(str(self.current_speech_data.path / "audio.mp3"))
             yield self.current_speech_data
         finally:
             self.wait_for_voiceover()
