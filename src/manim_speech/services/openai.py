@@ -108,27 +108,16 @@ class OpenAITranslationService(base.TranslationService, OpenAIService):
     def __init__(
         self,
         model: str = "gpt-4o",
-        src_lang: str | None = None,
-        dst_lang: str | None = None,
         *,
         api_key: str | None = None,
         base_url: str | None = None,
     ) -> None:
         super().__init__(api_key=api_key, base_url=base_url)
         self.model = model
-        self.src_lang = src_lang
-        self.dst_lang = dst_lang
         self.system_message = """Translate the given text from {src_lang} to {dst_lang}. Do not output anything other than the translated text.
         If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text. Do NOT skip any XML tags."""
 
-    def translate(
-        self, text: str, *, src_lang: str | None = None, dst_lang: str | None = None
-    ) -> str:
-        src_lang = src_lang if isinstance(src_lang, str) else self.src_lang
-        dst_lang = dst_lang if isinstance(dst_lang, str) else self.dst_lang
-        if isinstance(src_lang, type(None)) or isinstance(dst_lang, type(None)):
-            raise ValueError("Either 'src_lang' or 'dst_lang' were not specified.")
-
+    def translate(self, text: str, *, src_lang: str, dst_lang: str) -> str:
         result = (
             self.client.chat.completions.create(
                 messages=[

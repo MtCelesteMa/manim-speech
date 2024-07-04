@@ -62,6 +62,4 @@ class TranslationService(Service):
         return "Translation"
 
     @abstractmethod
-    def translate(
-        self, text: str, *, src_lang: str | None = None, dst_lang: str | None = None
-    ) -> str: ...
+    def translate(self, text: str, *, src_lang: str, dst_lang: str) -> str: ...

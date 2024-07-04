@@ -1,4 +1,4 @@
-"""Speech utils for Manim Speech."""
+"""Voiceover utils for Manim Speech."""
 
 import hashlib
 import pathlib
@@ -13,7 +13,7 @@ from mutagen.mp3 import MP3
 from . import services
 
 
-class SpeechData(pydantic.BaseModel):
+class VoiceoverData(pydantic.BaseModel):
     path: pathlib.Path
     transcript: services.base.Transcript
     duration: float
@@ -54,7 +54,7 @@ def create(
     stt_service: services.base.STTService | None = None,
     *,
     cache_dir: pathlib.Path | str | None = None,
-) -> SpeechData:
+) -> VoiceoverData:
     if isinstance(cache_dir, type(None)):
         cache_dir = pathlib.Path(manim.config.media_dir) / "manim_speech"
     elif isinstance(cache_dir, str):
@@ -69,12 +69,21 @@ def create(
         with (cache_path / "text.txt").open("w") as f:
             f.write(cleaned_text)
 
+    manim.logger.info(
+        f"Processing voiceover \"{f"{cleaned_text[:50]}..." if len(cleaned_text) > 50 else cleaned_text}\" stored at {slug}..."
+    )
+
     audio_path = cache_path / "audio.mp3"
     if not audio_path.exists():
+        manim.logger.info(f'Audio file for "{slug}" not found.')
         if isinstance(tts_service, services.base.TTSService):
+            manim.logger.info(
+                f"Generating audio using {tts_service.service_name} TTS service..."
+            )
             tts_service.tts(cleaned_text, audio_path)
         else:
-            return SpeechData(
+            manim.logger.info(f'No TTS service specified. Skipping "{slug}".')
+            return VoiceoverData(
                 path=cache_path,
                 transcript=services.base.Transcript(text="", boundaries=[]),
                 duration=1e-6,
@@ -86,11 +95,18 @@ def create(
         with transcript_path.open() as f:
             transcript = services.base.Transcript.model_validate_json(f.read())
     else:
+        manim.logger.info(f'Transcript file for "{slug}" not found.')
         if isinstance(stt_service, services.base.STTService):
+            manim.logger.info(
+                f"Generating transcript using {stt_service.service_name} STT service..."
+            )
             transcript = stt_service.stt(audio_path)
             with transcript_path.open("w") as f:
                 f.write(transcript.model_dump_json(indent=4))
         else:
+            manim.logger.info(
+                f'No STT service specified. Using default method for "{slug}".'
+            )
             transcript = services.base.Transcript(
                 text=cleaned_text,
                 boundaries=[
@@ -103,7 +119,7 @@ def create(
                 ],
             )
 
-    return SpeechData(
+    return VoiceoverData(
         path=cache_path,
         transcript=transcript,
         duration=MP3(audio_path).info.length,
