@@ -1,9 +1,9 @@
 """AssemblyAI services."""
 
 import os
-import pathlib
+from os import PathLike
 
-from . import base
+from .base import Boundary, Service, STTService, Transcript
 
 try:
     import assemblyai as aai
@@ -11,9 +11,9 @@ except ImportError:
     raise ImportError("Please install assemblyai with `pip install assemblyai`")
 
 
-class AssemblyAIService(base.Service):
+class AssemblyAIService(Service):
     def __init__(self, *, api_key: str | None = None) -> None:
-        if not isinstance(api_key, str):
+        if api_key is None:
             api_key = os.getenv("ASSEMBLYAI_API_KEY")
             if api_key is None:
                 raise ValueError("AssemblyAI API key is not provided")
@@ -25,39 +25,32 @@ class AssemblyAIService(base.Service):
         return "AssemblyAI"
 
 
-class AssemblyAISTTService(base.STTService, AssemblyAIService):
+class AssemblyAISTTService(STTService, AssemblyAIService):
     def __init__(
-        self,
-        model: str = "universal-3-5-pro",
-        language: str | None = None,
-        word_boost: list[str] | None = None,
-        custom_spelling: dict[str, list[str]] | None = None,
-        *,
-        api_key: str | None = None,
+        self, model: str = "universal-3-5-pro", language: str | None = None, *, api_key: str | None = None, **kwargs
     ) -> None:
         super().__init__(api_key=api_key)
         self.config = aai.TranscriptionConfig(
             speech_models=[model],
             language_code=language,
             language_detection=(language is None),
-            word_boost=word_boost if word_boost is not None else [],
-            custom_spelling=custom_spelling,
             punctuate=False,
+            **kwargs,
         )
 
-    def stt(self, in_path: pathlib.Path | str) -> base.Transcript:
+    def stt(self, in_path: str | PathLike[str]) -> Transcript:
         aai.settings.api_key = self.api_key
-        response = aai.Transcriber(config=self.config).transcribe(str(in_path))
+        response = aai.Transcriber(config=self.config).transcribe(os.fspath(in_path))
         if response.error:
             raise ValueError(response.error)
 
-        word_boundaries: list[base.Boundary] = []
+        word_boundaries: list[Boundary] = []
         text_offset = 0
         assert response.words is not None and response.text is not None
         for word in response.words:
             text_start = response.text.find(word.word, text_offset)
             word_boundaries.append(
-                base.Boundary(
+                Boundary(
                     text=word.text,
                     start=word.start / 1000,
                     end=word.end / 1000,
@@ -66,4 +59,4 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
             )
             text_offset = text_start + len(word.text)
 
-        return base.Transcript(text=response.text, boundaries=word_boundaries)
+        return Transcript(text=response.text, boundaries=word_boundaries)

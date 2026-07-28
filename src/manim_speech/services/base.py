@@ -1,9 +1,9 @@
 """Base classes for services."""
 
-import pathlib
 from abc import ABC, abstractmethod
+from os import PathLike
 
-import pydantic
+from pydantic import BaseModel, computed_field
 
 
 class Service(ABC):
@@ -22,27 +22,27 @@ class TTSService(Service):
         return "TTS"
 
     @abstractmethod
-    def tts(self, text: str, out_path: pathlib.Path | str) -> None: ...
+    def tts(self, text: str, out_path: str | PathLike[str]) -> None: ...
 
 
-class Boundary(pydantic.BaseModel):
+class Boundary(BaseModel):
     text: str
     start: float
     end: float
     text_start: int
 
-    @pydantic.computed_field
+    @computed_field
     @property
     def length(self) -> int:
         return len(self.text)
 
-    @pydantic.computed_field
+    @computed_field
     @property
     def text_end(self) -> int:
         return self.text_start + self.length
 
 
-class Transcript(pydantic.BaseModel):
+class Transcript(BaseModel):
     text: str
     boundaries: list[Boundary]
 
@@ -53,7 +53,7 @@ class STTService(Service):
         return "STT"
 
     @abstractmethod
-    def stt(self, in_path: pathlib.Path | str) -> Transcript: ...
+    def stt(self, in_path: str | PathLike[str]) -> Transcript: ...
 
 
 class TranslationService(Service):
@@ -62,4 +62,4 @@ class TranslationService(Service):
         return "Translation"
 
     @abstractmethod
-    def translate(self, text: str, *, src_lang: str, dst_lang: str) -> str: ...
+    def translate(self, text: str, src_lang: str, dst_lang: str) -> str: ...
