@@ -24,9 +24,7 @@ def remove_bookmarks(s: str) -> str:
     return re.sub(r"<bookmark\s*mark\s*=['\"]\w*[\"']\s*/>", "", s)
 
 
-def get_bookmark_times(
-    text: str, transcript: services.base.Transcript
-) -> dict[str, float]:
+def get_bookmark_times(text: str, transcript: services.base.Transcript) -> dict[str, float]:
     cleaned_text = remove_bookmarks(text)
     ct_len = len(cleaned_text)
     tt_len = len(transcript.text.strip())
@@ -55,7 +53,7 @@ def create(
     *,
     cache_dir: pathlib.Path | str | None = None,
 ) -> VoiceoverData:
-    if isinstance(cache_dir, type(None)):
+    if cache_dir is None:
         cache_dir = pathlib.Path(manim.config.media_dir) / "manim_speech"
     elif isinstance(cache_dir, str):
         cache_dir = pathlib.Path(cache_dir)
@@ -70,16 +68,14 @@ def create(
             f.write(cleaned_text)
 
     manim.logger.info(
-        f"Processing voiceover \"{f"{cleaned_text[:50]}..." if len(cleaned_text) > 50 else cleaned_text}\" stored at {slug}..."
+        f'Processing voiceover "{f"{cleaned_text[:50]}..." if len(cleaned_text) > 50 else cleaned_text}" stored at {slug}...'
     )
 
     audio_path = cache_path / "audio.mp3"
     if not audio_path.exists():
         manim.logger.info(f'Audio file for "{slug}" not found.')
         if isinstance(tts_service, services.base.TTSService):
-            manim.logger.info(
-                f"Generating audio using {tts_service.service_name} TTS service..."
-            )
+            manim.logger.info(f"Generating audio using {tts_service.service_name} TTS service...")
             tts_service.tts(cleaned_text, audio_path)
         else:
             manim.logger.info(f'No TTS service specified. Skipping "{slug}".')
@@ -97,16 +93,12 @@ def create(
     else:
         manim.logger.info(f'Transcript file for "{slug}" not found.')
         if isinstance(stt_service, services.base.STTService):
-            manim.logger.info(
-                f"Generating transcript using {stt_service.service_name} STT service..."
-            )
+            manim.logger.info(f"Generating transcript using {stt_service.service_name} STT service...")
             transcript = stt_service.stt(audio_path)
             with transcript_path.open("w") as f:
                 f.write(transcript.model_dump_json(indent=4))
         else:
-            manim.logger.info(
-                f'No STT service specified. Using default method for "{slug}".'
-            )
+            manim.logger.info(f'No STT service specified. Using default method for "{slug}".')
             transcript = services.base.Transcript(
                 text=cleaned_text,
                 boundaries=[

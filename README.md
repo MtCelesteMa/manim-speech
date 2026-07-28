@@ -51,10 +51,13 @@ import manim
 import manim_speech
 from manim_speech.services import openai as openai_service
 
+
 class MeaningOfLife(manim_speech.VoiceoverScene):
     def construct(self) -> None:
-        self.set_tts_service(openai_service.OpenAITTSService()) # Remove this line if you want to manually record voiceovers.
-        self.set_stt_service(openai_service.OpenAISTTService()) # Only required if you use bookmarks.
+        self.set_tts_service(
+            openai_service.OpenAITTSService()
+        )  # Remove this line if you want to manually record voiceovers.
+        self.set_stt_service(openai_service.OpenAISTTService())  # Only required if you use bookmarks.
 
         with self.voiceover("What is the meaning of life?") as speech_data:
             txt = manim.Text("The meaning of life is 42.")
@@ -69,11 +72,16 @@ import manim
 import manim_speech
 from manim_speech.services import openai as openai_service
 
+
 class MeaningOfLife(manim_speech.VoiceoverScene, manim_speech.TranslationScene):
     def construct(self) -> None:
-        self.set_tts_service(openai_service.OpenAITTSService()) # Remove this line if you want to manually record voiceovers.
-        self.set_stt_service(openai_service.OpenAISTTService()) # Only required if you use bookmarks.
-        self.set_translation_service(openai_service.OpenAITranslationService()) # Remove this line if you want to manually translate text.
+        self.set_tts_service(
+            openai_service.OpenAITTSService()
+        )  # Remove this line if you want to manually record voiceovers.
+        self.set_stt_service(openai_service.OpenAISTTService())  # Only required if you use bookmarks.
+        self.set_translation_service(
+            openai_service.OpenAITranslationService()
+        )  # Remove this line if you want to manually translate text.
 
         self.translate(__file__, "meaning_of_life", "en", "zh_tw")
         _ = self._

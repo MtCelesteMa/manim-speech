@@ -27,18 +27,13 @@ class VoiceoverScene(manim.Scene):
             self.wait(duration)
 
     def wait_for_voiceover(self) -> None:
-        if not isinstance(self.current_voiceover_data, type(None)) and not isinstance(
-            self.current_voiceover_start_time, type(None)
-        ):
+        if not (self.current_voiceover_data is None) and not (self.current_voiceover_start_time is None):
             self.safe_wait(
-                self.current_voiceover_data.duration
-                - (self.renderer.time - self.current_voiceover_start_time)
+                self.current_voiceover_data.duration - (self.renderer.time - self.current_voiceover_start_time)
             )
 
     def wait_until_bookmark(self, key: str) -> None:
-        if not isinstance(self.current_voiceover_data, type(None)) and not isinstance(
-            self.current_voiceover_start_time, type(None)
-        ):
+        if not (self.current_voiceover_data is None) and not (self.current_voiceover_start_time is None):
             self.safe_wait(
                 self.current_voiceover_data.bookmarks.get(key, 0.0)
                 - (self.renderer.time - self.current_voiceover_start_time)
@@ -47,13 +42,9 @@ class VoiceoverScene(manim.Scene):
     @contextlib.contextmanager
     def voiceover(self, text: str) -> abc.Generator[voiceover.VoiceoverData, None, None]:
         if not isinstance(self.stt_service, services.base.STTService):
-            manim.logger.warning(
-                "No STT service is set. Bookmark locations will be inaccurate."
-            )
+            manim.logger.warning("No STT service is set. Bookmark locations will be inaccurate.")
         try:
-            self.current_voiceover_data = voiceover.create(
-                text, self.tts_service, self.stt_service
-            )
+            self.current_voiceover_data = voiceover.create(text, self.tts_service, self.stt_service)
             self.current_voiceover_start_time = self.renderer.time
             if (self.current_voiceover_data.path / "audio.mp3").exists():
                 self.add_sound(str(self.current_voiceover_data.path / "audio.mp3"))
@@ -68,9 +59,7 @@ class TranslationScene(manim.Scene):
     translation_service: services.base.TranslationService | None = None
     _ = staticmethod(gettext.gettext)
 
-    def set_translation_service(
-        self, service: services.base.TranslationService
-    ) -> None:
+    def set_translation_service(self, service: services.base.TranslationService) -> None:
         self.translation_service = service
 
     def translate(
@@ -81,10 +70,6 @@ class TranslationScene(manim.Scene):
         target_language: str,
     ) -> None:
         translation.init_translation_env(file, domain)
-        translation.translate_po_file(
-            domain, source_language, target_language, service=self.translation_service
-        )
-        trans = gettext.translation(
-            domain, languages=[target_language], localedir="locales"
-        )
+        translation.translate_po_file(domain, source_language, target_language, service=self.translation_service)
+        trans = gettext.translation(domain, languages=[target_language], localedir="locales")
         self._ = trans.gettext

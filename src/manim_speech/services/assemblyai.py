@@ -13,13 +13,11 @@ except ImportError:
 
 
 class AssemblyAIService(base.Service):
-    def __init__(
-        self, *, cache_dir: pathlib.Path | str | None = None, api_key: str | None = None
-    ) -> None:
+    def __init__(self, *, cache_dir: pathlib.Path | str | None = None, api_key: str | None = None) -> None:
         super().__init__(cache_dir=cache_dir)
         if not isinstance(api_key, str):
             api_key = os.getenv("ASSEMBLYAI_API_KEY")
-            if not isinstance(api_key, str):
+            if api_key is None:
                 raise ValueError("AssemblyAI API key is not provided")
         self.api_key = api_key
 
@@ -43,16 +41,12 @@ class AssemblyAISTTService(base.STTService, AssemblyAIService):
         self.model = model
         self.language = language
         self.word_boost = word_boost if isinstance(word_boost, list) else []
-        self.custom_spelling = (
-            custom_spelling if isinstance(custom_spelling, dict) else {}
-        )
+        self.custom_spelling = custom_spelling if isinstance(custom_spelling, dict) else {}
 
         self.config = aai.TranscriptionConfig(
-            speech_model=aai.SpeechModel.best
-            if model == "best"
-            else aai.SpeechModel.nano,
+            speech_model=aai.SpeechModel.best if model == "best" else aai.SpeechModel.nano,
             language_code=language if isinstance(language, str) else None,
-            language_detection=isinstance(language, type(None)),
+            language_detection=(language is None),
             word_boost=self.word_boost,
             custom_spelling=self.custom_spelling,
             punctuate=False,

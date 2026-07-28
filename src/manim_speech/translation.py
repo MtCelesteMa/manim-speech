@@ -2,6 +2,7 @@
 
 import pathlib
 import subprocess
+import sys
 
 import manim
 import polib
@@ -20,7 +21,8 @@ def init_translation_env(file: pathlib.Path | str, domain: str) -> None:
             "-o",
             str(pathlib.Path("locales") / f"{domain}.pot"),
             str(file),
-        ]
+        ],
+        check=False,
     )
     if result.returncode != 0:
         raise RuntimeError(f"xgettext failed with return code {result.returncode}")
@@ -57,9 +59,9 @@ def translate_po_file(
         pofile.save(str(target_path.with_suffix(".po")))
         if not isinstance(service, services.base.TranslationService):
             manim.console.print(
-                f"An empty translation file has been created at {target_path.with_suffix(".po")}. Please fill it in and then rerun `manim`."
+                f"An empty translation file has been created at {target_path.with_suffix('.po')}. Please fill it in and then rerun `manim`."
             )
-            exit(1)
+            sys.exit(1)
     else:
         manim.logger.info(f"Translation file for {target_lang} found.")
         pofile = polib.pofile(str(target_path.with_suffix(".po")))

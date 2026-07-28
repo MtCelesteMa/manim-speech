@@ -37,9 +37,7 @@ class WhisperSTTService(base.STTService, WhisperService):
             config={"model": self.model, "device": self.device},
         )
 
-        transcript = self.model_obj.transcribe(
-            str(self.cache_dir / input.audio_path), word_timestamps=True
-        )
+        transcript = self.model_obj.transcribe(str(self.cache_dir / input.audio_path), word_timestamps=True)
 
         word_boundaries: list[base.Boundary] = []
         text_offset = 0

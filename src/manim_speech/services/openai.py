@@ -12,12 +12,10 @@ except ImportError:
 
 
 class OpenAIService(base.Service):
-    def __init__(
-        self, *, api_key: str | None = None, base_url: str | None = None
-    ) -> None:
+    def __init__(self, *, api_key: str | None = None, base_url: str | None = None) -> None:
         if not isinstance(api_key, str):
             api_key = os.getenv("OPENAI_API_KEY")
-            if not isinstance(api_key, str):
+            if api_key is None:
                 raise ValueError("OpenAI API key is not provided")
         self.api_key = api_key
         self.base_url = base_url
@@ -123,9 +121,7 @@ class OpenAITranslationService(base.TranslationService, OpenAIService):
                 messages=[
                     {
                         "role": "system",
-                        "content": self.system_message.format(
-                            src_lang=src_lang, dst_lang=dst_lang
-                        ),
+                        "content": self.system_message.format(src_lang=src_lang, dst_lang=dst_lang),
                     },
                     {"role": "user", "content": text},
                 ],
@@ -135,6 +131,6 @@ class OpenAITranslationService(base.TranslationService, OpenAIService):
             .choices[0]
             .message.content
         )
-        if isinstance(result, type(None)):
+        if result is None:
             raise ValueError(f"Unexpected response: {result}")
         return result
