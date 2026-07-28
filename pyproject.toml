@@ -35,7 +35,6 @@ elevenlabs = ["elevenlabs>=2.59.0,<3"]
 whisper = ["openai-whisper"]
 assemblyai = ["assemblyai>=0.64.0,<0.65"]
 deepl = ["deepl>=1.30.0,<2"]
-chinese = ["langconv>=0.3.0,<0.4"]
 
 [project.urls]
 Homepage = "https://github.com/MtCelesteMa/manim-speech"

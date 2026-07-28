@@ -13,14 +13,12 @@ except ImportError:
 
 class OpenAIService(base.Service):
     def __init__(self, *, api_key: str | None = None, base_url: str | None = None) -> None:
-        if not isinstance(api_key, str):
+        if api_key is None:
             api_key = os.getenv("OPENAI_API_KEY")
             if api_key is None:
                 raise ValueError("OpenAI API key is not provided")
-        self.api_key = api_key
-        self.base_url = base_url
 
-        self.client = openai.OpenAI(api_key=self.api_key, base_url=base_url)
+        self.client = openai.OpenAI(api_key=api_key, base_url=base_url)
 
     @property
     def service_name(self) -> str:
@@ -31,7 +29,7 @@ class OpenAITTSService(base.TTSService, OpenAIService):
     def __init__(
         self,
         voice: str = "alloy",
-        model: str = "tts-1-hd",
+        model: str = "gpt-4o-mini-tts",
         speed: float = 1.0,
         *,
         api_key: str | None = None,
@@ -46,9 +44,10 @@ class OpenAITTSService(base.TTSService, OpenAIService):
         if isinstance(out_path, str):
             out_path = pathlib.Path(out_path)
 
-        self.client.audio.speech.create(
+        with self.client.audio.speech.with_streaming_response.create(
             input=text, model=self.model, voice=self.voice, speed=self.speed
-        ).stream_to_file(out_path)
+        ) as response:
+            response.stream_to_file(out_path)
 
 
 class OpenAISTTService(base.STTService, OpenAIService):
@@ -69,68 +68,27 @@ class OpenAISTTService(base.STTService, OpenAIService):
             in_path = pathlib.Path(in_path)
 
         with in_path.open("rb") as af:
-            if isinstance(self.language, str):
-                response = self.client.audio.transcriptions.create(
-                    file=af,
-                    model=self.model,
-                    language=self.language,
-                    response_format="verbose_json",
-                    timestamp_granularities=["word"],
-                )
-            else:
-                response = self.client.audio.transcriptions.create(
-                    file=af,
-                    model=self.model,
-                    response_format="verbose_json",
-                    timestamp_granularities=["word"],
-                )
+            response = self.client.audio.transcriptions.create(
+                file=af,
+                model=self.model,
+                language=self.language if self.language is not None else openai.omit,
+                response_format="verbose_json",
+                timestamp_granularities=["word"],
+            )
 
         boundaries: list[base.Boundary] = []
         text_offset = 0
+        assert response.words is not None
         for word in response.words:
-            text_start = response.text.find(word["word"], text_offset)
+            text_start = response.text.find(word.word, text_offset)
             boundaries.append(
                 base.Boundary(
-                    text=word["word"],
-                    start=word["start"],
-                    end=word["end"],
+                    text=word.word,
+                    start=word.start,
+                    end=word.end,
                     text_start=text_start,
                 )
             )
-            text_offset = text_start + len(word["word"])
+            text_offset = text_start + len(word.word)
 
         return base.Transcript(text=response.text, boundaries=boundaries)
-
-
-class OpenAITranslationService(base.TranslationService, OpenAIService):
-    def __init__(
-        self,
-        model: str = "gpt-4o",
-        *,
-        api_key: str | None = None,
-        base_url: str | None = None,
-    ) -> None:
-        super().__init__(api_key=api_key, base_url=base_url)
-        self.model = model
-        self.system_message = """Translate the given text from {src_lang} to {dst_lang}. Do not output anything other than the translated text.
-        If you encounter XML tags, do not translate their contents and insert them appropriately in the translated text. Do NOT skip any XML tags."""
-
-    def translate(self, text: str, *, src_lang: str, dst_lang: str) -> str:
-        result = (
-            self.client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": self.system_message.format(src_lang=src_lang, dst_lang=dst_lang),
-                    },
-                    {"role": "user", "content": text},
-                ],
-                model=self.model,
-                max_tokens=4095,
-            )
-            .choices[0]
-            .message.content
-        )
-        if result is None:
-            raise ValueError(f"Unexpected response: {result}")
-        return result

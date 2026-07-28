@@ -2,7 +2,6 @@
 
 import os
 import pathlib
-import typing
 
 from . import base
 
@@ -13,12 +12,12 @@ except ImportError:
 
 
 class AssemblyAIService(base.Service):
-    def __init__(self, *, cache_dir: pathlib.Path | str | None = None, api_key: str | None = None) -> None:
-        super().__init__(cache_dir=cache_dir)
+    def __init__(self, *, api_key: str | None = None) -> None:
         if not isinstance(api_key, str):
             api_key = os.getenv("ASSEMBLYAI_API_KEY")
             if api_key is None:
                 raise ValueError("AssemblyAI API key is not provided")
+
         self.api_key = api_key
 
     @property
@@ -29,64 +28,42 @@ class AssemblyAIService(base.Service):
 class AssemblyAISTTService(base.STTService, AssemblyAIService):
     def __init__(
         self,
-        model: typing.Literal["best", "nano"] = "best",
+        model: str = "universal-3-5-pro",
         language: str | None = None,
         word_boost: list[str] | None = None,
-        custom_spelling: dict[str, str | list[str]] | None = None,
+        custom_spelling: dict[str, list[str]] | None = None,
         *,
-        cache_dir: pathlib.Path | str | None = None,
         api_key: str | None = None,
     ) -> None:
-        super().__init__(cache_dir=cache_dir, api_key=api_key)
-        self.model = model
-        self.language = language
-        self.word_boost = word_boost if isinstance(word_boost, list) else []
-        self.custom_spelling = custom_spelling if isinstance(custom_spelling, dict) else {}
-
+        super().__init__(api_key=api_key)
         self.config = aai.TranscriptionConfig(
-            speech_model=aai.SpeechModel.best if model == "best" else aai.SpeechModel.nano,
-            language_code=language if isinstance(language, str) else None,
+            speech_models=[model],
+            language_code=language,
             language_detection=(language is None),
-            word_boost=self.word_boost,
-            custom_spelling=self.custom_spelling,
+            word_boost=word_boost if word_boost is not None else [],
+            custom_spelling=custom_spelling,
             punctuate=False,
         )
 
-    def stt(self, input: base.STTInput) -> base.STTData:
-        info = base.ServiceInfo(
-            service_name=self.service_name,
-            service_type=self.service_type,
-            config={
-                "model": self.model,
-                "language": self.language,
-                "word_boost": self.word_boost,
-                "custom_spelling": self.custom_spelling,
-            },
-        )
-
+    def stt(self, in_path: pathlib.Path | str) -> base.Transcript:
         aai.settings.api_key = self.api_key
-        transcriber = aai.Transcriber(config=self.config)
-        response = transcriber.transcribe(str(self.cache_dir / input.audio_path))
+        response = aai.Transcriber(config=self.config).transcribe(str(in_path))
         if response.error:
             raise ValueError(response.error)
 
         word_boundaries: list[base.Boundary] = []
         text_offset = 0
+        assert response.words is not None and response.text is not None
         for word in response.words:
+            text_start = response.text.find(word.word, text_offset)
             word_boundaries.append(
                 base.Boundary(
                     text=word.text,
                     start=word.start / 1000,
                     end=word.end / 1000,
-                    text_offset=text_offset,
+                    text_start=text_start,
                 )
             )
-            if text_offset != 0 and response.text[text_offset] == " ":
-                text_offset += 1
-            text_offset += len(word.text)
+            text_offset = text_start + len(word.text)
 
-        return base.STTData(
-            info=info,
-            input=input,
-            output=base.STTOutput(text=response.text, boundaries=word_boundaries),
-        )
+        return base.Transcript(text=response.text, boundaries=word_boundaries)

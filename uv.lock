@@ -46,15 +46,6 @@ wheels = [
 ]
 
 [[package]]
-name = "attrs"
-version = "23.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e3/fc/f800d51204003fa8ae392c4e8278f256206e7a919b708eef054f5f4b650d/attrs-23.2.0.tar.gz", hash = "sha256:935dc3b529c262f6cf76e50877d35a4bd3c1de194fd41f47a2b7ae8f19971f30", size = 780820, upload-time = "2023-12-31T06:30:32.926Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/44/827b2a91a5816512fcaf3cc4ebc465ccd5d598c45cefa6703fcf4a79018f/attrs-23.2.0-py3-none-any.whl", hash = "sha256:99b87a485a5820b23b879f04c2305b44b951b502fd64be915879d77a7e8fc6f1", size = 60752, upload-time = "2023-12-31T06:30:30.772Z" },
-]
-
-[[package]]
 name = "audioop-lts"
 version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -476,15 +467,6 @@ wheels = [
 ]
 
 [[package]]
-name = "iso639-lang"
-version = "2.6.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9b/5a/49bbf16d155192255e7bb37e403b2ac360144992d0d112a865afc62e457f/iso639_lang-2.6.3.tar.gz", hash = "sha256:078ddb7cd0182dcc04367691acc8022ddf7158b6cb09f08f798af823fa864265", size = 319391, upload-time = "2025-07-23T09:04:53.568Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/c7/f6fd3db6c33a164631c39dce2ca26a3794e3abf91b875cc99a43a5565d88/iso639_lang-2.6.3-py3-none-any.whl", hash = "sha256:a6c2fb9f739dca180dc7f48b098880f303bcce2cdf93a4ca3152ed8bbbb94fbb", size = 324990, upload-time = "2025-07-23T09:04:52.221Z" },
-]
-
-[[package]]
 name = "isosurfaces"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -577,19 +559,6 @@ wheels = [
 ]
 
 [[package]]
-name = "langconv"
-version = "0.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "attrs" },
-    { name = "iso639-lang" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/ae/4a5eef3a5e3f0ee0d79b2ae6ddd308728ee4268b3853eac7254607e3f96a/langconv-0.3.0.tar.gz", hash = "sha256:816bedf81db368a410959293a31aeebe4cd75de516427b50370727003f3bd3ce", size = 156298, upload-time = "2024-03-20T11:53:13.947Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/19/cdace243e18324427c2e2f7c0a5415f0eb8b94aca1f644e50c799f77821e/langconv-0.3.0-py3-none-any.whl", hash = "sha256:dfd3484e0373a07ed8271ab60293648e9d216ef460c58ff7dda80315292d0566", size = 152732, upload-time = "2024-03-20T11:53:11.98Z" },
-]
-
-[[package]]
 name = "llvmlite"
 version = "0.48.0"
 source = { registry = "https://pypi.org/simple" }
@@ -666,9 +635,6 @@ dependencies = [
 assemblyai = [
     { name = "assemblyai" },
 ]
-chinese = [
-    { name = "langconv" },
-]
 deepl = [
     { name = "deepl" },
 ]
@@ -693,7 +659,6 @@ requires-dist = [
     { name = "assemblyai", marker = "extra == 'assemblyai'", specifier = ">=0.64.0,<0.65" },
     { name = "deepl", marker = "extra == 'deepl'", specifier = ">=1.30.0,<2" },
     { name = "elevenlabs", marker = "extra == 'elevenlabs'", specifier = ">=2.59.0,<3" },
-    { name = "langconv", marker = "extra == 'chinese'", specifier = ">=0.3.0,<0.4" },
     { name = "manim", specifier = ">=0.20.1,<0.21" },
     { name = "mutagen", specifier = ">=1.47.0,<2" },
     { name = "openai", marker = "extra == 'openai'", specifier = ">=2.49.0,<3" },
@@ -702,7 +667,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.8.0,<3" },
     { name = "python-slugify", specifier = ">=8.0.4,<9" },
 ]
-provides-extras = ["openai", "elevenlabs", "whisper", "assemblyai", "deepl", "chinese"]
+provides-extras = ["openai", "elevenlabs", "whisper", "assemblyai", "deepl"]
 
 [package.metadata.requires-dev]
 dev = [

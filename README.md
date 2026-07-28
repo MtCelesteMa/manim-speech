@@ -27,7 +27,7 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 
 | Service Name | Optional Dependency Set | Is Local | Text-To-Speech | Speech-To-Text | Translation |
 |--------------|-------------------------|----------|----------------|----------------|-------------|
-| OpenAI       | `openai`                | No*      | Yes            | Yes            | Yes         |
+| OpenAI       | `openai`                | No*      | Yes            | Yes            | No          |
 | ElevenLabs   | `elevenlabs`            | No       | Yes            | No             | No          |
 | Whisper      | ~~`whisper`~~**         | Yes      | No             | Yes            | No          |
 | AssemblyAI   | `assemblyai`            | No       | No             | Yes            | No          |
@@ -39,9 +39,13 @@ Where `*optional_dependency_sets*` is a list of optional dependency sets for Man
 
 #### Notes on Chinese Translations
 
-**OpenAI Translator:** Please specify Traditional (`zh_tw`) or Simplified (`zh_cn`) when using the OpenAI translator. Only specifying `zh` has no guarantee on the script used, although tests have indicated that GPT-4o strongly prefers Simplified Chinese in such cases.
+~~**OpenAI Translator:** Please specify Traditional (`zh_tw`) or Simplified (`zh_cn`) when using the OpenAI translator. Only specifying `zh` has no guarantee on the script used, although tests have indicated that GPT-4o strongly prefers Simplified Chinese in such cases.~~
 
-**DeepL Translator:** The DeepL translator does not natively support translating to Traditional Chinese, so translating to Traditional Chinese requires the `chinese` optional dependency set to be installed. Only specifying `zh` has the same effect as specifying `zh_cn`.
+The OpenAI translation service has been removed in the upcoming version in favor of specialized translators.
+
+~~**DeepL Translator:** The DeepL translator does not natively support translating to Traditional Chinese, so translating to Traditional Chinese requires the `chinese` optional dependency set to be installed. Only specifying `zh` has the same effect as specifying `zh_cn`.~~
+
+DeepL has since added support for Traditional Chinese translations. The `chinese` optional dependency set is no longer necessary and has been removed in the upcoming version.
 
 ## Usage Examples
 
