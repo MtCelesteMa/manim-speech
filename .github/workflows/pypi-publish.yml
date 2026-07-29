@@ -25,4 +25,4 @@ jobs:
       - name: Build Package
         run: uv build
       - name: Publish to PyPI
-        uses: uv publish
+        run: uv publish
