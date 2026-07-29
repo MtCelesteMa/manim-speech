@@ -1,21 +1,22 @@
 """Voiceover utils for Manim Speech."""
 
 import hashlib
-import pathlib
 import re
+from os import PathLike
+from pathlib import Path
 
 import manim
 import numpy as np
-import pydantic
 import slugify
-from mutagen.mp3 import MP3
+from mutagen import File
+from pydantic import BaseModel
 
 from . import services
 
 
-class VoiceoverData(pydantic.BaseModel):
-    path: pathlib.Path
-    transcript: services.base.Transcript
+class VoiceoverData(BaseModel):
+    path: Path
+    transcript: services.Transcript
     duration: float
     bookmarks: dict[str, float]
 
@@ -24,7 +25,7 @@ def remove_bookmarks(s: str) -> str:
     return re.sub(r"<bookmark\s*mark\s*=['\"]\w*[\"']\s*/>", "", s)
 
 
-def get_bookmark_times(text: str, transcript: services.base.Transcript) -> dict[str, float]:
+def get_bookmark_times(text: str, transcript: services.Transcript) -> dict[str, float]:
     cleaned_text = remove_bookmarks(text)
     ct_len = len(cleaned_text)
     tt_len = len(transcript.text.strip())
@@ -33,7 +34,7 @@ def get_bookmark_times(text: str, transcript: services.base.Transcript) -> dict[
     offset = 0
     for part in re.split(r"(<bookmark\s*mark\s*=[\'\"]\w*[\"\']\s*/>)", text):
         match = re.match(r"<bookmark\s*mark\s*=[\'\"](.*)[\"\']\s*/>", part)
-        if isinstance(match, re.Match):
+        if match is not None:
             bookmark_dist[match.group(1)] = offset
         else:
             offset += len(part)
@@ -48,15 +49,15 @@ def get_bookmark_times(text: str, transcript: services.base.Transcript) -> dict[
 
 def create(
     text: str,
-    tts_service: services.base.TTSService | None = None,
-    stt_service: services.base.STTService | None = None,
+    tts_service: services.TTSService | None = None,
+    stt_service: services.STTService | None = None,
     *,
-    cache_dir: pathlib.Path | str | None = None,
+    cache_dir: str | PathLike[str] | None = None,
 ) -> VoiceoverData:
     if cache_dir is None:
-        cache_dir = pathlib.Path(manim.config.media_dir) / "manim_speech"
-    elif isinstance(cache_dir, str):
-        cache_dir = pathlib.Path(cache_dir)
+        cache_dir = Path(manim.config.media_dir) / "manim_speech"
+    elif not isinstance(cache_dir, Path):
+        cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     cleaned_text = remove_bookmarks(text)
@@ -74,14 +75,14 @@ def create(
     audio_path = cache_path / "audio.mp3"
     if not audio_path.exists():
         manim.logger.info(f'Audio file for "{slug}" not found.')
-        if isinstance(tts_service, services.base.TTSService):
+        if tts_service is not None:
             manim.logger.info(f"Generating audio using {tts_service.service_name} TTS service...")
             tts_service.tts(cleaned_text, audio_path)
         else:
             manim.logger.info(f'No TTS service specified. Skipping "{slug}".')
             return VoiceoverData(
                 path=cache_path,
-                transcript=services.base.Transcript(text="", boundaries=[]),
+                transcript=services.Transcript(text="", boundaries=[]),
                 duration=1e-6,
                 bookmarks={},
             )
@@ -89,23 +90,23 @@ def create(
     transcript_path = cache_path / "transcript.json"
     if transcript_path.exists():
         with transcript_path.open() as f:
-            transcript = services.base.Transcript.model_validate_json(f.read())
+            transcript = services.Transcript.model_validate_json(f.read())
     else:
         manim.logger.info(f'Transcript file for "{slug}" not found.')
-        if isinstance(stt_service, services.base.STTService):
+        if stt_service is not None:
             manim.logger.info(f"Generating transcript using {stt_service.service_name} STT service...")
             transcript = stt_service.stt(audio_path)
             with transcript_path.open("w") as f:
                 f.write(transcript.model_dump_json(indent=4))
         else:
             manim.logger.info(f'No STT service specified. Using default method for "{slug}".')
-            transcript = services.base.Transcript(
+            transcript = services.Transcript(
                 text=cleaned_text,
                 boundaries=[
-                    services.base.Boundary(
+                    services.Boundary(
                         text=cleaned_text,
                         start=0.0,
-                        end=MP3(audio_path).info.length,
+                        end=File(audio_path).info.length,
                         text_start=0,
                     )
                 ],
@@ -114,6 +115,6 @@ def create(
     return VoiceoverData(
         path=cache_path,
         transcript=transcript,
-        duration=MP3(audio_path).info.length,
+        duration=File(audio_path).info.length,
         bookmarks=get_bookmark_times(text, transcript),
     )

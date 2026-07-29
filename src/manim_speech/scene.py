@@ -2,8 +2,8 @@
 
 import contextlib
 import gettext
-import pathlib
 from collections import abc
+from os import PathLike
 
 import manim
 
@@ -11,15 +11,15 @@ from . import services, translation, voiceover
 
 
 class VoiceoverScene(manim.Scene):
-    tts_service: services.base.TTSService | None = None
-    stt_service: services.base.STTService | None = None
+    tts_service: services.TTSService | None = None
+    stt_service: services.STTService | None = None
     current_voiceover_data: voiceover.VoiceoverData | None = None
     current_voiceover_start_time: float | None = None
 
-    def set_tts_service(self, service: services.base.TTSService) -> None:
+    def set_tts_service(self, service: services.TTSService) -> None:
         self.tts_service = service
 
-    def set_stt_service(self, service: services.base.STTService) -> None:
+    def set_stt_service(self, service: services.STTService) -> None:
         self.stt_service = service
 
     def safe_wait(self, duration: float) -> None:
@@ -41,7 +41,7 @@ class VoiceoverScene(manim.Scene):
 
     @contextlib.contextmanager
     def voiceover(self, text: str) -> abc.Generator[voiceover.VoiceoverData, None, None]:
-        if not isinstance(self.stt_service, services.base.STTService):
+        if self.stt_service is None:
             manim.logger.warning("No STT service is set. Bookmark locations will be inaccurate.")
         try:
             self.current_voiceover_data = voiceover.create(text, self.tts_service, self.stt_service)
@@ -56,15 +56,15 @@ class VoiceoverScene(manim.Scene):
 
 
 class TranslationScene(manim.Scene):
-    translation_service: services.base.TranslationService | None = None
-    _ = staticmethod(gettext.gettext)
+    translation_service: services.TranslationService | None = None
+    __slots__ = ["_"]
 
-    def set_translation_service(self, service: services.base.TranslationService) -> None:
+    def set_translation_service(self, service: services.TranslationService) -> None:
         self.translation_service = service
 
     def translate(
         self,
-        file: pathlib.Path | str,
+        file: str | PathLike[str],
         domain: str,
         source_language: str,
         target_language: str,
